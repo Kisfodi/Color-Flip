@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Flip</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="start-screen" class="start-screen">
+        <h1>Color Flip Game</h1>
+        <div class="start-menu">
+            <div class="size-selector">
+                <label for="start-board-size">Select Board Size (Even Only):</label>
+                <select id="start-board-size"></select>
+            </div>
+            <div class="mode-selector">
+                <label for="start-game-mode">Select Game Mode:</label>
+                <select id="start-game-mode">
+                    <option value="all_on">All ON - Light up all cells</option>
+                    <option value="all_off">All OFF - Darken all cells</option>
+                    <option value="mixed">Mixed - Make board uniform</option>
+                </select>
+                <div class="mode-description" id="mode-description">
+                    Goal: Make all cells the same state
+                </div>
+            </div>
+            <button id="start-new-game-btn" class="start-btn">New Game</button>
+            <button id="start-load-game-btn" class="start-btn">Load Game</button>
+        </div>
+    </div>
+
+    <div id="game-screen" class="game-screen" style="display: none;">
+        <h1>Color Flip Game</h1>
+        <div id="game-controls">
+            <button id="back-btn">Back</button>
+            <label for="color-scheme">Color Scheme: </label>
+            <div class="color-scheme-selector">
+                <select id="color-scheme">
+                    {% for name, label in schemes_with_labels %}
+                    <option value="{{ name }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <div id="color-preview" class="color-preview">
+                    <div class="color-preview-item">
+                        <div class="color-box on-cell-preview" title="ON cell color"></div>
+                        <div class="color-label">ON</div>
+                    </div>
+                    <div class="color-preview-item">
+                        <div class="color-box off-cell-preview" title="OFF cell color"></div>
+                        <div class="color-label">OFF</div>
+                    </div>
+                </div>
+            </div>
+            <button id="save-game-btn">Save Game</button>
+            <button id="solve-game-btn">Solve Game</button>
+            <div id="timer" class="timer">Time: 0:00</div>
+        </div>
+
+        <div id="game-status">
+            <div id="completion-message" style="display: none;">
+                Game completed!
+                <div id="moves-count">Moves made: 0</div>
+                <div id="elapsed-time">Time: 0:00</div>
+            </div>
+        </div>
+        <div id="game-goal" class="game-goal"></div>
+        <div id="board-container"></div>
+    </div>
+
+    <script src="/static/js/game.js"></script>
+
+</body>
+</html>
