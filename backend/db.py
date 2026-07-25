@@ -1,42 +1,59 @@
+from __future__ import annotations
+
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
+from typing import Generator, Iterator
 
-import click
-from flask import current_app
-from flask import g
+BASE_DIR = Path(__file__).resolve().parents[1]
+DATABASE_PATH = BASE_DIR / "instance" / "db.sqlite"
+SCHEMA_PATH = BASE_DIR / "schema.sql"
 
-def get_db():
-    if "db" not in g:
-        g.db = sqlite3.connect(
-            current_app.config["DATABASE"], detect_types=sqlite3.PARSE_DECLTYPES
-        )
-        g.db.row_factory = sqlite3.Row
+sqlite3.register_converter("timestamp", lambda value: datetime.fromisoformat(value.decode()))
 
-    return g.db
 
-def close_db(e=None):
+def get_database_path() -> Path:
+    """Return the SQLite database path used by the FastAPI migration."""
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    return DATABASE_PATH
 
-    db = g.pop("db", None)
 
-    if db is not None:
-        db.close()
+def get_connection() -> sqlite3.Connection:
+    """Create a SQLite connection without relying on Flask's request context."""
+    conn = sqlite3.connect(
+        get_database_path(),
+        detect_types=sqlite3.PARSE_DECLTYPES,
+    )
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def init_db():
-    db = get_db()
 
-    with current_app.open_resource("schema.sql") as f:
-        db.executescript(f.read().decode("utf8"))
+@contextmanager
+def db_session() -> Iterator[sqlite3.Connection]:
+    """Context manager for plain database access in FastAPI code."""
+    conn = get_connection()
+    try:
+        yield conn
+    finally:
+        conn.close()
 
-@click.command("init-db")
-def init_db_command():
-    init_db()
-    click.echo("Database initialized.")
 
-sqlite3.register_converter('timestamp', lambda v: datetime.fromisoformat(v.decode()))
+def init_db() -> None:
+    """Initialize SQLite schema using a plain, framework-independent function."""
+    with db_session() as conn:
+        conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
 
-def init_app(app):
-    """Register database functions with the Flask app. This is called by
-    the application factory.
+
+def get_db_dependency() -> Generator[sqlite3.Connection, None, None]:
+    """FastAPI-style dependency that yields a database connection.
+
+    Example usage:
+        def some_route(db: sqlite3.Connection = Depends(get_db_dependency)):
+            ...
     """
-    app.teardown_appcontext(close_db)
-    app.cli.add_command(init_db_command)
+    conn = get_connection()
+    try:
+        yield conn
+    finally:
+        conn.close()

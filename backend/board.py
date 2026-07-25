@@ -1,5 +1,3 @@
-import fastapi
-
 import numpy as np
 
 class ColorFlipBoard:
