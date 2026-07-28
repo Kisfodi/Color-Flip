@@ -3,4 +3,3 @@ board:
   seed: null  # Set to an int for reproducible boards
   color_scheme: "black_gold_elegance"  # Options: default, pastel, neon, black_gold_elegance, ocean_breeze, pastel_dreamland_adventure
   mode: "mixed"  # Options: all_on, all_off, mixed
-

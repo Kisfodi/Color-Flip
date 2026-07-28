@@ -21,7 +21,6 @@ class Game:
         self._mode = mode
 
         self._start_time = None
-        self._elapsed_time = 0
 
         self.reset()
 
@@ -31,13 +30,13 @@ class Game:
         return self.get_game_state()
 
     def get_game_state(self, serialize: bool = True):
-        elapsed = time.time() - self._start_time if self._start_time else 0
+        elapsed_time = time.time() - self._start_time if self._start_time else 0
         return {
             "board": self._board.get_board(serialize=serialize),
             "game_over": self.is_solved(),
             "moves_made": self._moves_made,
             "board_size": (self._size, self._size),
-            "elapsed_time": elapsed,
+            "elapsed_time": elapsed_time,
             "mode": self._mode
         }
 
@@ -46,7 +45,6 @@ class Game:
         self._moves_made = 0
 
         self._start_time = time.time()
-        self._elapsed_time = 0
 
     def save_state(self):
         pass
@@ -67,7 +65,7 @@ class Game:
         """Return the current board state in a reusable format."""
         return self._board.get_board(serialize=True)
     
-    def is_solved(self):
+    def is_game_over(self):
         """Check if game is over based on the current mode."""
         goal_reached = False
 
@@ -82,7 +80,6 @@ class Game:
             goal_reached = self._board.is_all_on() or self._board.is_all_off()
 
         if goal_reached and self._start_time:
-            self._elapsed_time = time.time() - self._start_time
             self._start_time = None
 
         return goal_reached

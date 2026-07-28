@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, Request
 from backend.colors import get_all_color_schemes, get_color_scheme, validate_color_scheme
 from backend.config import get_default_board_size, get_default_seed, get_default_game_mode
 from backend.game import Game
-from frontend.api.schemas import NewGameRequest, StepRequest
-from frontend.deps import get_active_game, set_active_game
+from api.schemas import NewGameRequest, StepRequest
+from api.deps import get_active_game, set_active_game
 
 router = APIRouter()
 

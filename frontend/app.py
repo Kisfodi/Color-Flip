@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 from backend.colors import get_all_color_schemes
 from backend.db import init_db
-from frontend.api.routes import router
+from api.routes import router
 
 
 BASE_DIR = Path(__file__).resolve().parent
