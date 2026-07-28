@@ -258,6 +258,17 @@ button.cell:disabled:active {
     border-radius: 4px;
     cursor: pointer;
     background-color: white;
+}
+
+#solve-game-btn {
+    min-width: 110px;
+    font-weight: bold;
+}
+
+#solve-game-btn.active {
+    background-color: #28a745;
+    color: white;
+}
     color: #333;
     transition: all 0.2s ease;
 }

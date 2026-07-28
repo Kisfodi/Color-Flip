@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game screen buttons
     document.getElementById("back-btn").addEventListener("click", goBackToStartScreen);
     document.getElementById("solve-game-btn").addEventListener("click", solveGame);
+    setSolveButtonState(false);
 
     // Mode selector change handler
     document.getElementById("start-game-mode").addEventListener("change", () => {
@@ -206,6 +207,7 @@ function startNewGameWithSize(size, mode) {
 
     // Re-enable the solve game button for the new game
     document.getElementById("solve-game-btn").disabled = false;
+    setSolveButtonState(false);
 
     fetch('/api/new_game', {
         method: 'POST',
@@ -217,6 +219,8 @@ function startNewGameWithSize(size, mode) {
     .then(response => response.json())
     .then(data => {
         currentState = data;
+        persistentSolutionCells = data.solution_cells || [];
+        setSolveButtonState(Boolean(data.solve_mode));
         console.log(data);
         renderGameBoard();
         updateStatus();
@@ -226,6 +230,20 @@ function startNewGameWithSize(size, mode) {
     .catch(error => console.error('Error starting game:', error));
 }
 
+
+function setSolveButtonState(enabled) {
+    const button = document.getElementById("solve-game-btn");
+    if (!button) {
+        return;
+    }
+
+    const isEnabled = Boolean(enabled);
+    button.classList.toggle("active", isEnabled);
+    button.dataset.solveState = isEnabled ? "on" : "off";
+    button.setAttribute("aria-pressed", isEnabled ? "true" : "false");
+    button.innerText = `Solve: ${isEnabled ? "ON" : "OFF"}`;
+    button.textContent = `Solve: ${isEnabled ? "ON" : "OFF"}`;
+}
 
 function renderGameBoard(highlightSolutionCells = false, solutionCells = []) {
     const boardDiv = document.getElementById("board-container");
@@ -239,8 +257,7 @@ function renderGameBoard(highlightSolutionCells = false, solutionCells = []) {
     const schemeName = document.getElementById("color-scheme").value;
     const colors = getColorScheme(schemeName);
 
-    // Use persistent solution cells if highlighting is active, otherwise use provided cells
-    const cellsToHighlight = highlightSolutionCells ? solutionCells : persistentSolutionCells;
+    const cellsToHighlight = currentState?.solve_mode ? (highlightSolutionCells ? solutionCells : persistentSolutionCells) : [];
 
     // Create a Set for O(1) lookup of solution cells
     const solutionSet = new Set(cellsToHighlight.map(cell => `${cell[0]},${cell[1]}`));
@@ -301,6 +318,13 @@ function handleStep(event) {
     .then(response => response.json())
     .then(data => {
         currentState = data;
+        setSolveButtonState(Boolean(data.solve_mode));
+
+        if (data.solve_mode) {
+            return refreshSolveHints();
+        }
+
+        persistentSolutionCells = data.solution_cells || [];
         renderGameBoard();
         updateStatus();
     });
@@ -311,6 +335,8 @@ function updateStatus() {
     const movesCount = document.getElementById("moves-count");
     const elapsedTime = document.getElementById("elapsed-time");
     const gameGoal = document.getElementById("game-goal");
+
+    document.getElementById("solve-game-btn").disabled = currentState.game_over;
 
     if (currentState.game_over) {
         stopTimer();
@@ -323,9 +349,6 @@ function updateStatus() {
         elapsedTime.textContent = `Time: ${timeStr}`;
         completionMsg.style.display = "block";
         gameGoal.style.display = "none";
-
-        // Disable the solve game button when game is over
-        document.getElementById("solve-game-btn").disabled = true;
 
         // Disable all board buttons when game is over
         const boardButtons = document.querySelectorAll(".cell");
@@ -341,13 +364,35 @@ function updateStatus() {
 
 }
 
+function refreshSolveHints() {
+    return fetch('/api/solve_game', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({enabled: true})
+    })
+    .then(response => response.json())
+    .then(data => {
+        currentState = data;
+        const solutionCells = data.solution_cells || [];
+        persistentSolutionCells = solutionCells;
+        setSolveButtonState(Boolean(data.solve_mode));
+        renderGameBoard(true, solutionCells);
+        updateStatus();
+    });
+}
+
 function solveGame() {
+    const enabled = !currentState?.solve_mode;
+    setSolveButtonState(enabled);
+
     fetch('/api/solve_game', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({})
+        body: JSON.stringify({enabled: enabled})
     })
     .then(response => response.json())
     .then(data => {
@@ -355,6 +400,7 @@ function solveGame() {
         const solutionCells = data.solution_cells || [];
         // Set persistent highlights to the new solution cells
         persistentSolutionCells = solutionCells;
+        setSolveButtonState(Boolean(data.solve_mode));
         renderGameBoard(true, solutionCells);
         updateStatus();
     });

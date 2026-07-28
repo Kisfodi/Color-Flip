@@ -12,3 +12,7 @@ class NewGameRequest(BaseModel):
 class StepRequest(BaseModel):
     row: int
     col: int
+
+
+class SolveGameRequest(BaseModel):
+    enabled: Optional[bool] = None

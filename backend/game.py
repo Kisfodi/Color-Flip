@@ -21,6 +21,7 @@ class Game:
         self._mode = mode
 
         self._start_time = None
+        self._solve_mode = False
 
         self.reset()
 
@@ -37,12 +38,15 @@ class Game:
             "moves_made": self._moves_made,
             "board_size": (self._size, self._size),
             "elapsed_time": elapsed_time,
-            "mode": self._mode
+            "mode": self._mode,
+            "solve_mode": self._solve_mode,
+            "solution_cells": self._get_solution_cells() if self._solve_mode else []
         }
 
     def reset(self):
         self._board = ColorFlipBoard(size=self._size, seed=self._seed)
         self._moves_made = 0
+        self._solve_mode = False
 
         self._start_time = time.time()
 
@@ -84,57 +88,40 @@ class Game:
 
         return goal_reached
 
-    def solve_game(self):
-        """Solve the game based on the current mode."""
+    def solve_game(self, enabled: bool | None = None):
+        """Toggle solver hints on or off for the current board state."""
+        if enabled is None:
+            enabled = not self._solve_mode
+
+        self._solve_mode = bool(enabled)
+        
+        game_state = self.get_game_state()
+        
+        if self._solve_mode:
+            game_state["solution_cells"] = self._get_solution_cells()
+        else:
+            game_state["solution_cells"] = []
+        
+        return game_state
+
+    def _get_solution_cells(self):
         if self._mode == "all_on":
-            return self._solve_to_all_on()
-        elif self._mode == "all_off":
-            return self._solve_to_all_off()
-        else:  # "mixed" mode
-            return self._solve_to_mixed()
+            off_positions_to_press = self._get_positions_to_press(select_on_positions=False)
+            return [[int(row), int(col)] for row, col in off_positions_to_press]
 
-    def _solve_to_all_on(self):
-        """Solve the game to get all cells to ON state."""
-        # Find which cells are currently OFF
-        off_positions_to_press = self._get_positions_to_press(select_on_positions=False)
+        if self._mode == "all_off":
+            on_positions_to_press = self._get_positions_to_press(select_on_positions=True)
+            return [[int(row), int(col)] for row, col in on_positions_to_press]
 
-        # Convert to list of [row, col] pairs
-        solution_cells = [[int(row), int(col)] for row, col in off_positions_to_press]
-
-        game_state = self.get_game_state()
-        game_state["solution_cells"] = solution_cells
-        return game_state
-
-    def _solve_to_all_off(self):
-        """Solve the game to get all cells to OFF state."""
-        # Find which cells are currently ON
-        on_positions_to_press = self._get_positions_to_press(select_on_positions=True)
-
-        # Convert to list of [row, col] pairs
-        solution_cells = [[int(row), int(col)] for row, col in on_positions_to_press]
-
-        game_state = self.get_game_state()
-        game_state["solution_cells"] = solution_cells
-        return game_state
-
-    def _solve_to_mixed(self):
-        """Solve the even board for mixed mode (either all ON or all OFF)."""
         on_positions_to_press = self._get_positions_to_press(select_on_positions=True)
         off_positions_to_press = self._get_positions_to_press(select_on_positions=False)
 
-        # Choose the set with fewer moves
         if len(on_positions_to_press) <= len(off_positions_to_press):
             positions_to_press = list(on_positions_to_press.keys())
         else:
             positions_to_press = list(off_positions_to_press.keys())
 
-        # Convert positions to serializable format
-        solution_cells = [[int(row), int(col)] for row, col in positions_to_press]
-
-        game_state = self.get_game_state()
-        game_state["solution_cells"] = solution_cells
-        return game_state
-
+        return [[int(row), int(col)] for row, col in positions_to_press]
 
     def _get_positions_to_press(self, select_on_positions: bool = True):
         positions_to_press = {}

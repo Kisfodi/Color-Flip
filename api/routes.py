@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Request
 from backend.colors import get_all_color_schemes, get_color_scheme, validate_color_scheme
 from backend.config import get_default_board_size, get_default_seed, get_default_game_mode
 from backend.game import Game
-from api.schemas import NewGameRequest, StepRequest
+from api.schemas import NewGameRequest, SolveGameRequest, StepRequest
 from api.deps import get_active_game, set_active_game
 
 router = APIRouter()
@@ -84,9 +84,11 @@ def get_game_state(request: Request):
 
 
 @router.post("/solve_game")
-def solve_game(request: Request):
+def solve_game(request: Request, payload: Optional[SolveGameRequest] = None):
     game = get_active_game(request)
     if game is None:
         raise HTTPException(status_code=400, detail="No active game. Start a new game first.")
 
-    return game.solve_game()
+    data = payload.model_dump(exclude_none=True) if payload else {}
+    enabled = data.get("enabled")
+    return game.solve_game(enabled=enabled)
