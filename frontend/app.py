@@ -2,18 +2,15 @@ import argparse
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
-from backend.colors import get_all_color_schemes
 from backend.db import init_db
 from backend.api import router
 
 
 BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-TEMPLATES_DIR = BASE_DIR / "templates"
+DIST_DIR = BASE_DIR / "dist"
 
 
 def create_app() -> FastAPI:
@@ -21,27 +18,19 @@ def create_app() -> FastAPI:
     init_db()
     app.state.game = None
 
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
     app.include_router(router, prefix="/api")
 
-    templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+    if (DIST_DIR / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(DIST_DIR / "assets")), name="assets")
 
-    @app.get("/", response_class=HTMLResponse)
-    async def index(request: Request):
-        color_schemes = get_all_color_schemes()
-        schemes_with_labels = [
-            (name, scheme.get("label", name))
-            for name, scheme in color_schemes.items()
-        ]
 
-        return templates.TemplateResponse(
-            request=request,
-            name="index.html",
-            context={"schemes_with_labels": schemes_with_labels},
-        )
+    @app.get('/{full_path:path}')
+    async def spa_fallback(full_path: str, request: Request):
+
+        index_path = DIST_DIR / 'index.html'
+        return FileResponse(str(index_path))
 
     return app
-
 
 app = create_app()
 

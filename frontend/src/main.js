@@ -1,13 +1,16 @@
+import './style.css';
+import colorSchemes from './generated/colors.json';
+import gameConfig from './generated/game-config.json';
+
 let currentState = null;
 let currentColorScheme = null;
 let timerInterval = null;
-let persistentSolutionCells = [];  // Track highlighted cells across renders
-let colorSchemeCache = {};  // Cache color schemes after first fetch
-let defaultConfig = {};  // Store default config from server
+let persistentSolutionCells = [];   // Track highlighted cells across renders
+let colorSchemeCache = colorSchemes;  // Cache color schemes after first fetch
+let defaultConfig = gameConfig; // Store default config from server
 
 document.addEventListener('DOMContentLoaded', () => {
     // Load default config from server
-    loadDefaultConfig();
 
     // Populate board size dropdown with even numbers only
     const boardSizeSelect = document.getElementById("start-board-size");
@@ -17,6 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
         option.textContent = `${size}x${size}`;
         boardSizeSelect.appendChild(option);
     }
+
+    applyDefaultConfig();
+
+    populateColorSchemeSelect();
+    updateColorPreview();
 
     // Start screen buttons
     document.getElementById("start-new-game-btn").addEventListener("click", goToNewGameScreen);
@@ -42,56 +50,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Load colors on startup
-    loadAllColorSchemes();
 });
 
-function loadDefaultConfig() {
-    // Fetch default configuration from server
-    fetch('/api/config')
-    .then(response => response.json())
-    .then(data => {
-        defaultConfig = data;
-        console.log("Default config loaded:", defaultConfig);
+function populateColorSchemeSelect() {
+    const select = document.getElementById("color-scheme");
 
-        // Set board size dropdown to default
-        const boardSizeSelect = document.getElementById("start-board-size");
-        if (defaultConfig.size) {
-            boardSizeSelect.value = defaultConfig.size;
-        }
+    // if (!select || select.dataset.populated === "true") return;
 
-        // Set color scheme dropdown to default
-        const colorSchemeSelect = document.getElementById("color-scheme");
-        if (defaultConfig.color_scheme) {
-            colorSchemeSelect.value = defaultConfig.color_scheme;
-        }
+    select.innerHTML = '';
+    for (const [name, scheme] of Object.entries(colorSchemeCache)) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = scheme.label || name;
+        select.appendChild(option);
+    }
+    // select.dataset.populated = "true";
 
-        // Set game mode dropdown to default
-        const gameModeSelect = document.getElementById("start-game-mode");
-        if (defaultConfig.mode) {
-            gameModeSelect.value = defaultConfig.mode;
-            updateModeDescription();
-        }
-
-        // Update color preview with the default scheme
-        updateColorPreview();
-    })
-    .catch(error => console.error('Error loading default config:', error));
+    if (defaultConfig.color_scheme) {
+        select.value = defaultConfig.color_scheme;
+    }
 }
 
-function loadAllColorSchemes() {
-    // Fetch all color schemes from backend and cache them.
-    fetch('/api/colors')
-    .then(response => response.json())
-    .then(data => {
-        colorSchemeCache = data;
-        console.log("Color schemes loaded:", Object.keys(colorSchemeCache));
-        // Update color preview after schemes are loaded
-        updateColorPreview();
-    })
-    .catch(error => console.error('Error loading color schemes:', error));
-}
+function applyDefaultConfig() {
+    console.log("Default config loaded: ", defaultConfig);
 
+    const boardSizeSelect = document.getElementById("start-board-size");
+
+    console.log("Default size: ", defaultConfig.size);
+
+    if (defaultConfig.size) {
+        boardSizeSelect.value = defaultConfig.size;
+    }
+
+    const gameModeSelect = document.getElementById("start-game-mode");
+    if (defaultConfig.mode) {
+        gameModeSelect.value = defaultConfig.mode;
+        updateModeDescription();
+    }
+
+}
 function updateColorPreview() {
     // Get the currently selected color scheme
     const schemeName = document.getElementById("color-scheme").value;
@@ -177,7 +174,6 @@ function goToLoadGameScreen() {
 }
 
 function goBackToStartScreen() {
-    // Stop the timer
     stopTimer();
 
     // Reset timer display
@@ -202,7 +198,6 @@ function startNewGameWithSize(size, mode) {
     document.getElementById("completion-message").style.display = "none";
     document.getElementById("game-goal").style.display = "block";
 
-    // Update the game goal display
     updateGameGoal(mode);
 
     // Re-enable the solve game button for the new game
@@ -230,12 +225,9 @@ function startNewGameWithSize(size, mode) {
     .catch(error => console.error('Error starting game:', error));
 }
 
-
 function setSolveButtonState(enabled) {
     const button = document.getElementById("solve-game-btn");
-    if (!button) {
-        return;
-    }
+    if (!button) return;
 
     const isEnabled = Boolean(enabled);
     button.classList.toggle("active", isEnabled);
@@ -250,8 +242,6 @@ function renderGameBoard(highlightSolutionCells = false, solutionCells = []) {
     boardDiv.innerHTML = ''; // Clear previous board
 
     const board = currentState.board;
-    console.log("Board:\n");
-    console.log(board);
 
     // Get the current color scheme
     const schemeName = document.getElementById("color-scheme").value;
@@ -302,8 +292,6 @@ function renderGameBoard(highlightSolutionCells = false, solutionCells = []) {
 function handleStep(event) {
     const row = parseInt(event.target.dataset.row);
     const col = parseInt(event.target.dataset.col);
-
-    console.log(row, col);
 
     // Remove the pressed cell from persistent highlights if it was there
     persistentSolutionCells = persistentSolutionCells.filter(cell => !(cell[0] === row && cell[1] === col));
@@ -361,7 +349,6 @@ function updateStatus() {
         completionMsg.style.display = "none";
         gameGoal.style.display = "block";
     }
-
 }
 
 function refreshSolveHints() {
@@ -422,4 +409,30 @@ function startTimer() {
 
 function stopTimer() {
     clearInterval(timerInterval);
+}
+
+// HMR handling
+if (import.meta.hot) {
+    import.meta.hot.accept(
+        ['./generated/colors.json', './generated/game-config.json'],
+        ([newColors, newGameConfig]) => {
+            if (newColors) {
+                colorSchemeCache = newColors;
+            }
+
+            if (newGameConfig) {
+                defaultConfig = newGameConfig;
+                applyDefaultConfig();
+            }
+
+            if (newColors || newGameConfig) {
+                populateColorSchemeSelect();
+                updateColorPreview();
+                if (currentState) {
+                    renderGameBoard();
+                }
+            }
+
+        }
+    );
 }

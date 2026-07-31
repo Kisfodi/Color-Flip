@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Color Flip</title>
-    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <div id="start-screen" class="start-screen">
@@ -35,11 +34,7 @@
             <button id="back-btn">Back</button>
             <label for="color-scheme">Color Scheme: </label>
             <div class="color-scheme-selector">
-                <select id="color-scheme">
-                    {% for name, label in schemes_with_labels %}
-                    <option value="{{ name }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
+                <select id="color-scheme"></select>
                 <div id="color-preview" class="color-preview">
                     <div class="color-preview-item">
                         <div class="color-box on-cell-preview" title="ON cell color"></div>
@@ -67,7 +62,6 @@
         <div id="board-container"></div>
     </div>
 
-    <script src="/static/js/game.js?v=2"></script>
-
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>
