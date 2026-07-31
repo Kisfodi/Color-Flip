@@ -258,6 +258,8 @@ button.cell:disabled:active {
     border-radius: 4px;
     cursor: pointer;
     background-color: white;
+    color: #333;
+    transition: all 0.2s ease;
 }
 
 #solve-game-btn {
@@ -268,9 +270,6 @@ button.cell:disabled:active {
 #solve-game-btn.active {
     background-color: #28a745;
     color: white;
-}
-    color: #333;
-    transition: all 0.2s ease;
 }
 
 #game-controls select:hover {
