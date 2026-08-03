@@ -1,6 +1,6 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Body, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request, Path
 
 from backend.colors import get_all_color_schemes, get_color_scheme, validate_color_scheme
 from backend.config import get_default_board_size, get_default_seed, get_default_game_mode
@@ -16,6 +16,9 @@ from backend.api.schemas import (
 )
 
 router = APIRouter()
+
+_scheme_names = tuple(get_all_color_schemes().keys())
+SchemeName = Literal[_scheme_names]
 
 
 @router.get("/config")
@@ -43,7 +46,12 @@ def get_colors() -> dict[str, ColorScheme]:
 
 
 @router.get("/colors/{scheme_name}", response_model=ColorScheme)
-def get_color_scheme_endpoint(scheme_name: str) -> ColorScheme:
+def get_color_scheme_endpoint(
+    scheme_name: Annotated[
+        SchemeName,
+        Path(description="Key name of the color scheme to retrieve")
+    ]
+) -> ColorScheme:
     try:
         if not validate_color_scheme(scheme_name):
             raise HTTPException(status_code=404, detail=f"Color scheme '{scheme_name}' not found")

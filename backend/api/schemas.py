@@ -54,6 +54,14 @@ class ConfigResponse(BaseModel):
     color_scheme: str = Field(description="Default color scheme name")
     mode: GameMode = Field(description="Default game mode")
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"size": 6, "seed": 42, "color_scheme": "black_gold_elegance", "mode": "mixed"},
+            ]
+        }
+    )
+
 class BoardColors(BaseModel):
     on_cell: str
     off_cell: str
@@ -63,9 +71,46 @@ class BoardColors(BaseModel):
     solution_border: str
     border: str
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "on_cell": "#fca311",
+                    "off_cell": "#14213d",
+                    "solution_highlight": "#E5E5E5",
+                    "solution_glow_inner": "rgba(229, 229, 229, 0.9)",
+                    "solution_glow_outer": "rgba(229, 229, 229, 0.7)",
+                    "solution_border": "#E5E5E5",
+                    "border": "#000000",
+                }
+            ]
+        }
+    )
+
 class ColorScheme(BaseModel):
     label: str
     board: BoardColors
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "label": "Black & Gold Elegance",
+                    "board": {
+                        "on_cell": "#fca311",
+                        "off_cell": "#14213d",
+                        "solution_highlight": "#E5E5E5",
+                        "solution_glow_inner": "rgba(229, 229, 229, 0.9)",
+                        "solution_glow_outer": "rgba(229, 229, 229, 0.7)",
+                        "solution_border": "#E5E5E5",
+                        "border": "#000000",
+                    }
+                }
+            ]
+        }
+    )
+
+
 
 class GameStateResponse(BaseModel):
     board: list[list[bool]] = Field(description="Current state of the game board, in row-major order")
@@ -77,4 +122,21 @@ class GameStateResponse(BaseModel):
     solve_mode: bool
     solution_cells: list[tuple[int, int]] = Field(
         description="List of coordinates for solution cells, only populated if solve_mode is true"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "board": [[True, False], [False, True]],
+                    "game_over": False,
+                    "moves_made": 3,
+                    "board_size": [2, 2],
+                    "elapsed_time": 12.4,
+                    "mode": "mixed",
+                    "solve_mode": True,
+                    "solution_cells": [[0, 1], [1, 0]]
+                }
+            ]
+        }
     )
