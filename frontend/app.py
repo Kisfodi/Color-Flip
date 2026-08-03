@@ -1,13 +1,10 @@
 import argparse
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI
 
-from backend.db import init_db
 from backend.api import router
-
+from backend.db import init_db
 
 BASE_DIR = Path(__file__).resolve().parent
 DIST_DIR = BASE_DIR / "dist"
@@ -19,16 +16,7 @@ def create_app() -> FastAPI:
     app.state.game = None
 
     app.include_router(router, prefix="/api")
-
-    if (DIST_DIR / "assets").exists():
-        app.mount("/assets", StaticFiles(directory=str(DIST_DIR / "assets")), name="assets")
-
-
-    @app.get('/{full_path:path}')
-    async def spa_fallback(full_path: str, request: Request):
-
-        index_path = DIST_DIR / 'index.html'
-        return FileResponse(str(index_path))
+    app.frontend("/", directory=str(DIST_DIR))
 
     return app
 

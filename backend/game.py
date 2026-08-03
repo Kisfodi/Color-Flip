@@ -1,11 +1,13 @@
-from .board import ColorFlipBoard
 import time
+from backend.game_mode import GameMode
+from .board import ColorFlipBoard
+
 
 class Game:
 
-    VALID_MODES = ("all_on", "all_off", "mixed")
+    VALID_MODES = tuple(GameMode)
 
-    def __init__(self, size: int, seed: int = None, mode: str = "mixed"):
+    def __init__(self, size: int, seed: int | None = None, mode: GameMode = GameMode.MIXED):
         # Validate size
         if not isinstance(size, int):
             raise ValueError("Board size must be an integer")
@@ -62,7 +64,7 @@ class Game:
 
     def get_state(self, serializable: bool = True):
         """Return the current game state snapshot."""
-        return self.get_game_state()
+        return self.get_game_state(serialize=serializable)
 
     @property
     def board(self):
@@ -71,16 +73,12 @@ class Game:
     
     def is_game_over(self):
         """Check if game is over based on the current mode."""
-        goal_reached = False
 
-        if self._mode == "all_on":
-            # Goal: all cells are ON (True)
+        if self._mode == GameMode.ALL_ON:
             goal_reached = self._board.is_all_on()
-        elif self._mode == "all_off":
-            # Goal: all cells are OFF (False)
+        elif self._mode == GameMode.ALL_OFF:
             goal_reached = self._board.is_all_off()
         else:  # "mixed" mode
-            # Goal: either all ON or all OFF
             goal_reached = self._board.is_all_on() or self._board.is_all_off()
 
         if goal_reached and self._start_time:
@@ -105,11 +103,11 @@ class Game:
         return game_state
 
     def _get_solution_cells(self):
-        if self._mode == "all_on":
+        if self._mode == GameMode.ALL_ON:
             off_positions_to_press = self._get_positions_to_press(select_on_positions=False)
             return [[int(row), int(col)] for row, col in off_positions_to_press]
 
-        if self._mode == "all_off":
+        if self._mode == GameMode.ALL_OFF:
             on_positions_to_press = self._get_positions_to_press(select_on_positions=True)
             return [[int(row), int(col)] for row, col in on_positions_to_press]
 

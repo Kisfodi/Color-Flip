@@ -1,42 +1,49 @@
-from typing import Optional
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request
 
 from backend.colors import get_all_color_schemes, get_color_scheme, validate_color_scheme
 from backend.config import get_default_board_size, get_default_seed, get_default_game_mode
 from backend.game import Game
-from backend.api.schemas import NewGameRequest, SolveGameRequest, StepRequest
 from backend.api.deps import get_active_game, set_active_game
+from backend.api.schemas import (
+    NewGameRequest,
+    SolveGameRequest,
+    StepRequest,
+    ConfigResponse,
+    ColorScheme,
+    GameStateResponse
+)
 
 router = APIRouter()
 
 
 @router.get("/config")
-def get_config():
+def get_config() -> ConfigResponse:
     try:
         from backend.config import get_all_config
 
         config = get_all_config()
-        return {
-            "size": config.get("size", 4),
-            "seed": config.get("seed"),
-            "color_scheme": config.get("color_scheme", "default"),
-            "mode": config.get("mode", "mixed"),
-        }
+        return ConfigResponse(
+            size=config.get("size", 4),
+            seed=config.get("seed"),
+            color_scheme=config.get("color_scheme", "default"),
+            mode=config.get("mode", "mixed")
+        )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-@router.get("/colors")
-def get_colors():
+@router.get("/colors", response_model=dict[str, ColorScheme])
+def get_colors() -> dict[str, ColorScheme]:
     try:
         return get_all_color_schemes()
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-@router.get("/colors/{scheme_name}")
-def get_color_scheme_endpoint(scheme_name: str):
+@router.get("/colors/{scheme_name}", response_model=ColorScheme)
+def get_color_scheme_endpoint(scheme_name: str) -> ColorScheme:
     try:
         if not validate_color_scheme(scheme_name):
             raise HTTPException(status_code=404, detail=f"Color scheme '{scheme_name}' not found")
@@ -47,10 +54,20 @@ def get_color_scheme_endpoint(scheme_name: str):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
+@router.get("/game_state", response_model=GameStateResponse)
+def get_game_state(request: Request) -> GameStateResponse:
+    game = get_active_game(request)
+    if game is None:
+        raise HTTPException(status_code=400, detail="No active game. Start a new game first.")
 
-@router.post("/new_game")
-def new_game(request: Request, payload: Optional[NewGameRequest] = None):
-    data = payload.model_dump(exclude_none=True) if payload else {}
+    return game.get_game_state()
+
+@router.post("/new_game", response_model=GameStateResponse)
+def new_game(
+        request: Request,
+        payload: Annotated[NewGameRequest, Body()] = NewGameRequest(),
+) -> GameStateResponse:
+    data = payload.model_dump(exclude_none=True)
 
     size = data.get("size", get_default_board_size())
     seed = data.get("seed", get_default_seed())
@@ -65,8 +82,11 @@ def new_game(request: Request, payload: Optional[NewGameRequest] = None):
     return game.get_game_state()
 
 
-@router.post("/step")
-def step(request: Request, payload: StepRequest):
+@router.post("/step", response_model=GameStateResponse)
+def step(
+        request: Request,
+        payload: StepRequest
+) -> GameStateResponse:
     game = get_active_game(request)
     if game is None:
         raise HTTPException(status_code=400, detail="No active game. Start a new game first.")
@@ -74,21 +94,15 @@ def step(request: Request, payload: StepRequest):
     return game.step(payload.row, payload.col)
 
 
-@router.get("/game_state")
-def get_game_state(request: Request):
+@router.post("/solve_game", response_model=GameStateResponse)
+def solve_game(
+        request: Request,
+        payload: Annotated[SolveGameRequest, Body()] = SolveGameRequest(),
+) -> GameStateResponse:
     game = get_active_game(request)
     if game is None:
         raise HTTPException(status_code=400, detail="No active game. Start a new game first.")
 
-    return game.get_game_state()
-
-
-@router.post("/solve_game")
-def solve_game(request: Request, payload: Optional[SolveGameRequest] = None):
-    game = get_active_game(request)
-    if game is None:
-        raise HTTPException(status_code=400, detail="No active game. Start a new game first.")
-
-    data = payload.model_dump(exclude_none=True) if payload else {}
+    data = payload.model_dump(exclude_none=True)
     enabled = data.get("enabled")
     return game.solve_game(enabled=enabled)
