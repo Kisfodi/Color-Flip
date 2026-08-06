@@ -1,0 +1,24 @@
+#game-status {
+    margin: 10px;
+    font-weight: bold;
+}
+
+#completion-message {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+#moves-count,
+#elapsed-time {
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+#game-goal {
+    margin: 15px 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    min-height: 24px;
+}

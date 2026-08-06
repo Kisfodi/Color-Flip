@@ -1,0 +1,129 @@
+.start-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.start-screen h1 {
+    color: white;
+    font-size: 48px;
+    margin-bottom: 50px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.start-menu {
+    display: flex;
+    gap: 30px;
+    flex-direction: column;
+}
+
+.size-selector {
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.size-selector label {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.size-selector input {
+    width: 80px;
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid white;
+    border-radius: 5px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.size-selector input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.size-selector input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #fff;
+}
+
+.mode-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.mode-selector label {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.mode-selector select {
+    width: 280px;
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid white;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-selector select:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.mode-selector select:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #fff;
+}
+
+.mode-selector select option {
+    background: #333;
+    color: white;
+}
+
+.mode-description {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    font-style: italic;
+    text-align: center;
+    min-height: 20px;
+}
+
+.start-btn {
+    padding: 15px 40px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    background: #007bff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.start-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+.start-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
