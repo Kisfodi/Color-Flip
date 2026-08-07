@@ -1,3 +1,10 @@
+:root {
+    --highlight-glow-inner: gray;
+    --highlight-glow-outer: gray;
+    --highlight-border: gray;
+    --cell-bg-color: gray;
+}
+
 #board-container {
     display: inline-block;
     border: 2px solid #ccc;

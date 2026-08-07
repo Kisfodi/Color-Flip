@@ -23,6 +23,7 @@ class Game:
         self._mode = mode
 
         self._start_time = None
+        self._end_time = None
         self._solve_mode = False
 
         self.reset()
@@ -33,7 +34,7 @@ class Game:
         return self.get_game_state()
 
     def get_game_state(self, serialize: bool = True):
-        elapsed_time = time.time() - self._start_time if self._start_time else 0
+        elapsed_time = self._get_elapsed_time()
         return {
             "board": self._board.get_board(serialize=serialize),
             "game_over": self.is_solved(),
@@ -45,12 +46,21 @@ class Game:
             "solution_cells": self._get_solution_cells() if self._solve_mode else []
         }
 
+    def _get_elapsed_time(self):
+
+        if self._start_time is None:
+            return 0
+        end_time = self._end_time if self._end_time is not None else time.time()
+
+        return end_time - self._start_time
+
     def reset(self):
         self._board = ColorFlipBoard(size=self._size, seed=self._seed)
         self._moves_made = 0
         self._solve_mode = False
 
         self._start_time = time.time()
+        self._end_time = None
 
     def save_state(self):
         pass
@@ -81,8 +91,8 @@ class Game:
         else:  # "mixed" mode
             goal_reached = self._board.is_all_on() or self._board.is_all_off()
 
-        if goal_reached and self._start_time:
-            self._start_time = None
+        if goal_reached and self._end_time is None:
+            self._end_time = time.time()
 
         return goal_reached
 
