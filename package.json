@@ -3,11 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "concurrently -n frontend,backend -c blue,green \"npm --prefix frontend run dev\" \"python -m frontend.app --debug\"",
-    "build": "npm --prefix frontend run build",
-    "start": "python -m frontend.app"
+    "backend": "dotenv -- .venv/Scripts/python -m frontend.app",
+    "backend:debug": "dotenv -- .venv/Scripts/python -m frontend.app --debug",
+    "dev": "concurrently -n frontend,backend -c blue,green \"npm --prefix frontend run dev\" \"npm run backend:debug\"",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "start": "npm run backend"
   },
   "devDependencies": {
-    "concurrently": "^10.0.4"
+    "concurrently": "^10.0.4",
+    "dotenv-cli": "^11.0.0"
   }
 }
