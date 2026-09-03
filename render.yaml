@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: color-flip
+    runtime: python
+    buildCommand: "npm run build && uv sync --frozen --no-dev"
+    startCommand: "uv run python -m frontend.app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14

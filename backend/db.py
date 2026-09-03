@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
@@ -7,7 +8,8 @@ from pathlib import Path
 from typing import Generator, Iterator
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-DATABASE_PATH = BASE_DIR / "instance" / "db.sqlite"
+DEFAULT_DB_PATH = BASE_DIR / "instance" / "db.sqlite"
+DATABASE_PATH = Path(os.environ.get('DATABASE_PATH', DEFAULT_DB_PATH))
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
 sqlite3.register_converter("timestamp", lambda value: datetime.fromisoformat(value.decode()))

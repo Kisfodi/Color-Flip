@@ -8,23 +8,40 @@
     <div id="start-screen" class="start-screen">
         <h1>Color Flip Game</h1>
         <div class="start-menu">
-            <div class="size-selector">
-                <label for="start-board-size">Select Board Size (Even Only):</label>
-                <select id="start-board-size"></select>
-            </div>
-            <div class="mode-selector">
-                <label for="start-game-mode">Select Game Mode:</label>
-                <select id="start-game-mode">
-                    <option value="all_on">All ON - Light up all cells</option>
-                    <option value="all_off">All OFF - Darken all cells</option>
-                    <option value="mixed">Mixed - Make board uniform</option>
-                </select>
-                <div class="mode-description" id="mode-description">
-                    Goal: Make all cells the same state
-                </div>
-            </div>
+            <button id="start-resume-game-btn" class="start-btn" style="display: none;">Resume Game</button>
             <button id="start-new-game-btn" class="start-btn">New Game</button>
             <button id="start-load-game-btn" class="start-btn">Load Game</button>
+        </div>
+    </div>
+
+    <!-- New Game Setup Modal -->
+    <div id="new-game-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>New Game Setup</h2>
+                <button id="close-modal-btn" class="close-btn" title="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="size-selector">
+                    <label for="start-board-size">Select Board Size (Even Only):</label>
+                    <select id="start-board-size"></select>
+                </div>
+                <div class="mode-selector">
+                    <label for="start-game-mode">Select Game Mode:</label>
+                    <select id="start-game-mode">
+                        <option value="all_on">All ON - Light up all cells</option>
+                        <option value="all_off">All OFF - Darken all cells</option>
+                        <option value="mixed">Mixed - Make board uniform</option>
+                    </select>
+                    <div class="mode-description" id="mode-description">
+                        Goal: Make all cells the same state
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-new-game-btn" class="modal-btn secondary-btn">Cancel</button>
+                <button id="confirm-start-game-btn" class="modal-btn primary-btn">Start Game</button>
+            </div>
         </div>
     </div>
 
@@ -32,6 +49,7 @@
         <h1>Color Flip Game</h1>
         <div id="game-controls">
             <button id="back-btn">Back</button>
+            <button id="undo-btn" disabled>Undo</button>
             <label for="color-scheme">Color Scheme: </label>
             <div class="color-scheme-selector">
                 <select id="color-scheme"></select>
@@ -53,9 +71,14 @@
 
         <div id="game-status">
             <div id="completion-message" style="display: none;">
-                Game completed!
+                <div class="completion-title">Game completed!</div>
                 <div id="moves-count">Moves made: 0</div>
                 <div id="elapsed-time">Time: 0:00</div>
+                <div class="completion-actions" style="margin-top: 10px; display: flex; gap: 8px; justify-content: center;">
+                    <button id="try-again-btn">Try Again</button>
+                    <button id="new-puzzle-btn">New Puzzle</button>
+                    <button id="menu-btn">Main Menu</button>
+                </div>
             </div>
         </div>
         <div id="game-goal" class="game-goal"></div>

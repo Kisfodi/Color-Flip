@@ -6,7 +6,10 @@ __pycache__/
 *pytest_cache/
 *.log
 .idea
+.env
+.env.*
 *.env
+!.env.example
 *.sqlite3
 *.db
 *.swp
@@ -14,3 +17,5 @@ __pycache__/
 .DS_Store
 Thumbs.db
 instance
+node_modules/
+tensorboard_logs

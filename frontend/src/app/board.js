@@ -1,4 +1,4 @@
-import {solveGameRequest, stepRequest} from "./api.js";
+import {solveGameRequest, stepRequest, undoRequest} from "./api.js";
 import {
     getCurrentState, getPersistentSolutionCells, handleGameOver,
     removePersistentSolutionCell,
@@ -24,6 +24,10 @@ export function renderGameBoard(highlightSolutionCells = false, solutionCells = 
     const currentState = getCurrentState();
     const boardDiv = document.getElementById("board-container");
     boardDiv.innerHTML = ''; // Clear previous board
+
+    if (!currentState || !currentState.board) {
+        return;
+    }
 
     const board = currentState.board;
 
@@ -75,48 +79,79 @@ export function renderGameBoard(highlightSolutionCells = false, solutionCells = 
 function handleStep(event) {
     const row = parseInt(event.target.dataset.row);
     const col = parseInt(event.target.dataset.col);
+    const wasSolveMode = Boolean(getCurrentState()?.solve_mode);
 
     removePersistentSolutionCell(row, col);
 
     stepRequest(row, col)
         .then(data => {
             setCurrentState(data);
-            setSolveButtonState(Boolean(data.solve_mode));
 
-            if (data.solve_mode) {
+            if (wasSolveMode) {
                 return refreshSolveHints();
             }
 
-            setPersistentSolutionCells(data.solution_cells || []);
             renderGameBoard();
             updateStatus();
-        });
+        })
+        .catch(error => console.error('Error making step:', error));
+}
+
+export function handleUndo() {
+    const currentState = getCurrentState();
+    if (!currentState || currentState.game_over || (currentState.moves_made || 0) <= 0) {
+        return;
+    }
+
+    const wasSolveMode = Boolean(currentState?.solve_mode);
+
+    undoRequest()
+        .then(data => {
+            setCurrentState(data);
+
+            if (wasSolveMode) {
+                return refreshSolveHints();
+            }
+
+            renderGameBoard();
+            updateStatus();
+        })
+        .catch(error => console.error('Error undoing move:', error));
 }
 
 export function updateStatus() {
 
     const currentState = getCurrentState();
+    if (!currentState) return;
+
     const completionMsg = document.getElementById("completion-message");
     const movesCount = document.getElementById("moves-count");
     const elapsedTime = document.getElementById("elapsed-time");
     const gameGoal = document.getElementById("game-goal");
+    const solveBtn = document.getElementById("solve-game-btn");
+    const undoBtn = document.getElementById("undo-btn");
 
-    document.getElementById("solve-game-btn").disabled = currentState.game_over;
+    if (solveBtn) {
+        solveBtn.disabled = currentState.game_over;
+    }
+
+    if (undoBtn) {
+        undoBtn.disabled = currentState.game_over || (currentState.moves_made || 0) <= 0;
+    }
 
     if (currentState.game_over) {
 
         handleGameOver(currentState);
-        // import('./timer.app').then(({ stopTimer }) => stopTimer());
 
         const minutes = Math.floor(currentState.elapsed_time / 60);
         const seconds = Math.floor(currentState.elapsed_time % 60);
         const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
         // Update template values
-        movesCount.textContent = `Moves made: ${currentState.moves_made}`;
-        elapsedTime.textContent = `Time: ${timeStr}`;
-        completionMsg.style.display = "block";
-        gameGoal.style.display = "none";
+        if (movesCount) movesCount.textContent = `Moves made: ${currentState.moves_made}`;
+        if (elapsedTime) elapsedTime.textContent = `Time: ${timeStr}`;
+        if (completionMsg) completionMsg.style.display = "block";
+        if (gameGoal) gameGoal.style.display = "none";
 
         // Disable all board buttons when game is over
         const boardButtons = document.querySelectorAll(".cell");
@@ -126,8 +161,8 @@ export function updateStatus() {
         });
     } else {
         // Hide the completion message and show the goal when game is not over
-        completionMsg.style.display = "none";
-        gameGoal.style.display = "block";
+        if (completionMsg) completionMsg.style.display = "none";
+        if (gameGoal) gameGoal.style.display = "block";
     }
 }
 

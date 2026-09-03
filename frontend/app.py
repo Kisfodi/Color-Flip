@@ -1,3 +1,4 @@
+import os
 import argparse
 from pathlib import Path
 
@@ -24,9 +25,13 @@ app = create_app()
 
 
 def main():
+
+    default_port = int(os.environ.get("PORT", 5050))
+    default_host = os.environ.get("HOST", "0.0.0.0")
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=5050, help="Port to listen on")
-    parser.add_argument("--host", type=str, default="localhost", help="Host IP")
+    parser.add_argument("--port", type=int, default=default_port, help="Port to listen on")
+    parser.add_argument("--host", type=str, default=default_host, help="Host IP")
     parser.add_argument("--debug", action="store_true", help="Debug mode")
     args = parser.parse_args()
 

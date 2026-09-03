@@ -113,7 +113,10 @@ class ColorScheme(BaseModel):
 
 
 class GameStateResponse(BaseModel):
+    game_id: str | None = Field(default=None, description="Unique UUID for this game session")
+    seed: int | None = Field(default=None, description="Seed used for reproducible board generation")
     board: list[list[bool]] = Field(description="Current state of the game board, in row-major order")
+    initial_board: list[list[bool]] | None = Field(default=None, description="Initial state of the game board")
     game_over: bool
     moves_made: int
     board_size: tuple[int, int]

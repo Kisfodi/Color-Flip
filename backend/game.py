@@ -1,13 +1,23 @@
 import time
 from backend.game_mode import GameMode
 from .board import ColorFlipBoard
+import numpy as np
 
 
 class Game:
 
     VALID_MODES = tuple(GameMode)
 
-    def __init__(self, size: int, seed: int | None = None, mode: GameMode = GameMode.MIXED):
+    def __init__(
+            self,
+            size: int,
+            seed: int | None = None,
+            mode: GameMode = GameMode.MIXED,
+            current_board_state: list | None = None,
+            moves_made: int = 0,
+            moves_history: list | None = None,
+            elapsed_time_offset: float = 0.0,
+    ):
         # Validate size
         if not isinstance(size, int):
             raise ValueError("Board size must be an integer")
@@ -18,52 +28,70 @@ class Game:
         if mode not in self.VALID_MODES:
             raise ValueError(f"Invalid game mode '{mode}'. Valid modes: {self.VALID_MODES}")
         
+        if seed is None:
+            seed = int(np.random.randint(1, 1_000_000))
+
         self._size = size
         self._seed = seed
         self._mode = mode
 
-        self._start_time = None
-        self._end_time = None
+        self._board = ColorFlipBoard(size=size, seed=seed, initial_state=current_board_state)
+        self._initial_board = self._board.get_board(serialize=True)
+        self._moves_made = moves_made
+        self._moves_history = moves_history if moves_history is not None else []
         self._solve_mode = False
 
-        self.reset()
-
-    def step(self, row: int, col: int):
-        self._board.do_step(row, col)
-        self._moves_made += 1
-        return self.get_game_state()
+        self._start_time = time.time() - elapsed_time_offset
+        self._end_time = None
 
     def get_game_state(self, serialize: bool = True):
         elapsed_time = self._get_elapsed_time()
         return {
             "board": self._board.get_board(serialize=serialize),
+            "initial_board": self._initial_board,
             "game_over": self.is_solved(),
             "moves_made": self._moves_made,
             "board_size": (self._size, self._size),
             "elapsed_time": elapsed_time,
             "mode": self._mode,
             "solve_mode": self._solve_mode,
-            "solution_cells": self._get_solution_cells() if self._solve_mode else []
+            "solution_cells": self._get_solution_cells() if self._solve_mode else [],
+            "seed": self._seed
         }
 
     def _get_elapsed_time(self):
-
-        if self._start_time is None:
-            return 0
         end_time = self._end_time if self._end_time is not None else time.time()
-
         return end_time - self._start_time
 
-    def reset(self):
-        self._board = ColorFlipBoard(size=self._size, seed=self._seed)
-        self._moves_made = 0
-        self._solve_mode = False
+    # def reset(self):
+    #     self._board = ColorFlipBoard(size=self._size, seed=self._seed)
+    #     self._moves_made = 0
+    #     self._moves_history = []
+    #     self._solve_mode = False
+    #
+    #     self._start_time = time.time()
+    #     self._end_time = None
 
-        self._start_time = time.time()
-        self._end_time = None
+    def step(self, row: int, col: int):
+        self._board.do_step(row, col)
+        self._moves_made += 1
+        self._moves_history.append([row, col])
 
-    def save_state(self):
-        pass
+        return self.get_game_state()
+
+    def undo(self):
+        if not self._moves_history:
+            raise ValueError("No moves to undo")
+
+        last_row, last_col = self._moves_history.pop()
+        self._board.do_step(last_row, last_col)
+
+        self._moves_made = max(0, self._moves_made - 1)
+        if self._end_time is not None:
+            self._end_time = None  # Reset end time if the game was previously solved
+
+        return self.get_game_state()
+
     def flip_cell(self, row: int, col: int):
         """Alias for step(row, col) to expose a clear board-action API."""
         return self.step(row, col)
@@ -80,6 +108,11 @@ class Game:
     def board(self):
         """Return the current board state in a reusable format."""
         return self._board.get_board(serialize=True)
+
+    @property
+    def moves_history(self) -> list:
+        """Return a copy of the move history (list of [row, col] pairs)."""
+        return list(self._moves_history)
     
     def is_game_over(self):
         """Check if game is over based on the current mode."""
@@ -156,3 +189,15 @@ class Game:
         positions_to_press_filtered = dict(filter(lambda p: p[1] % 2 > 0, positions_to_press.items()))
 
         return positions_to_press_filtered
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Game":
+        return cls(
+            size=data["board_size"],
+            seed=data["seed"],
+            mode=data["mode"],
+            current_board_state=data["board"],
+            moves_made=data.get("moves_made", 0),
+            moves_history=data.get("moves_history", []),
+            elapsed_time_offset=data.get("elapsed_time", 0.0),
+        )

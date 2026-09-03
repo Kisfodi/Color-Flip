@@ -34,26 +34,7 @@
     font-weight: bold;
 }
 
-.size-selector input {
-    width: 80px;
-    padding: 10px;
-    font-size: 16px;
-    border: 2px solid white;
-    border-radius: 5px;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
 
-.size-selector input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.size-selector input:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.3);
-    border-color: #fff;
-}
 
 .mode-selector {
     display: flex;
@@ -68,28 +49,32 @@
     font-weight: bold;
 }
 
+.size-selector select,
 .mode-selector select {
-    width: 280px;
+    width: 100%; /*280px*/
     padding: 10px;
     font-size: 16px;
-    border: 2px solid white;
-    border-radius: 5px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.2);
     color: white;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
+.size-selector select:hover,
 .mode-selector select:hover {
     background: rgba(255, 255, 255, 0.3);
 }
 
+.size-selector select:focus,
 .mode-selector select:focus {
     outline: none;
     background: rgba(255, 255, 255, 0.3);
     border-color: #fff;
 }
 
+.size-selector select option,
 .mode-selector select option {
     background: #333;
     color: white;
