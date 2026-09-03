@@ -11,5 +11,8 @@
   "devDependencies": {
     "js-yaml": "^5.2.2",
     "vite": "^8.1.1"
+  },
+  "dependencies": {
+    "color-flip": "file:.."
   }
 }
