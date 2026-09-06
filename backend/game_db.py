@@ -21,15 +21,16 @@ def create_game_in_db(
     cursor.execute(
         """
         INSERT INTO games (
-            id, user_id, board_size, game_mode, seed,
+            id, user_id, board_size, game_mode, ruleset, seed,
             initial_board, current_board, moves_history, moves_count, time_elapsed, is_completed
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
         """,
         (
             game_id,
             user_id,
             game_state["board_size"][0],
             str(game_state["mode"]),
+            str(game_state.get("ruleset", "color_flip")),
             seed,
             serialize_board(game_state["board"]),
             serialize_board(game_state["board"]),
@@ -83,7 +84,7 @@ def load_game_from_db(
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT board_size, game_mode, seed, current_board, moves_history, moves_count, time_elapsed, is_completed 
+        SELECT board_size, game_mode, ruleset, seed, current_board, moves_history, moves_count, time_elapsed, is_completed 
         FROM games 
         WHERE id = ?
         """,
@@ -97,6 +98,7 @@ def load_game_from_db(
     return {
         "board_size": row["board_size"],
         "mode": row["game_mode"],
+        "ruleset": row["ruleset"] or "color_flip",
         "seed": row["seed"],
         "board": deserialize_board(row["current_board"]),
         "moves_history": json.loads(row["moves_history"]),

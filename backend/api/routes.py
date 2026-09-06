@@ -86,9 +86,10 @@ def new_game(
     size = data.get("size", get_default_board_size())
     seed = data.get("seed", get_default_seed())
     mode = data.get("mode", get_default_game_mode())
+    ruleset = data.get("ruleset", "color_flip")
 
     try:
-        game = Game(size=size, seed=seed, mode=mode)
+        game = Game(size=size, seed=seed, mode=mode, ruleset=ruleset)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 

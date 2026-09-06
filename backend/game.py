@@ -1,41 +1,40 @@
+from __future__ import annotations
 import time
-from backend.game_mode import GameMode
-from .board import ColorFlipBoard
 import numpy as np
+
+from backend.game_mode import GameMode
+from .board import Board
+from .rulesets import BasePuzzleRuleset, get_ruleset
 
 
 class Game:
-
-    VALID_MODES = tuple(GameMode)
 
     def __init__(
             self,
             size: int,
             seed: int | None = None,
-            mode: GameMode = GameMode.MIXED,
+            mode: GameMode | str = GameMode.MIXED,
+            ruleset: BasePuzzleRuleset | str = 'color_flip',
             current_board_state: list | None = None,
             moves_made: int = 0,
             moves_history: list | None = None,
             elapsed_time_offset: float = 0.0,
     ):
-        # Validate size
-        if not isinstance(size, int):
-            raise ValueError("Board size must be an integer")
-        if size % 2 != 0:
-            raise ValueError("Board size must be even")
-        if size < 2 or size > 20:
-            raise ValueError("Board size must be between 2 and 20")
-        if mode not in self.VALID_MODES:
-            raise ValueError(f"Invalid game mode '{mode}'. Valid modes: {self.VALID_MODES}")
-        
         if seed is None:
             seed = int(np.random.randint(1, 1_000_000))
 
         self._size = size
         self._seed = seed
-        self._mode = mode
+        self._ruleset = get_ruleset(ruleset)
+        self._ruleset_name = ruleset if isinstance(ruleset, str) else ruleset.__class__.__name__
 
-        self._board = ColorFlipBoard(size=size, seed=seed, initial_state=current_board_state)
+        mode = GameMode(mode)
+        self._ruleset.validate_size(size)
+        if mode not in self._ruleset.supported_modes:
+            raise ValueError(f"Mode '{mode}' not supported by ruleset '{self._ruleset_name}'. Supported modes: {self._ruleset.supported_modes}")
+
+        self._mode = mode
+        self._board = Board(size=size, ruleset=self._ruleset, seed=seed, initial_state=current_board_state)
         self._initial_board = self._board.get_board(serialize=True)
         self._moves_made = moves_made
         self._moves_history = moves_history if moves_history is not None else []
@@ -54,6 +53,7 @@ class Game:
             "board_size": (self._size, self._size),
             "elapsed_time": elapsed_time,
             "mode": self._mode,
+            "ruleset": self._ruleset_name,
             "solve_mode": self._solve_mode,
             "solution_cells": self._get_solution_cells() if self._solve_mode else [],
             "seed": self._seed
@@ -63,17 +63,8 @@ class Game:
         end_time = self._end_time if self._end_time is not None else time.time()
         return end_time - self._start_time
 
-    # def reset(self):
-    #     self._board = ColorFlipBoard(size=self._size, seed=self._seed)
-    #     self._moves_made = 0
-    #     self._moves_history = []
-    #     self._solve_mode = False
-    #
-    #     self._start_time = time.time()
-    #     self._end_time = None
-
     def step(self, row: int, col: int):
-        self._board.do_step(row, col)
+        self._board.apply_step(row, col)
         self._moves_made += 1
         self._moves_history.append([row, col])
 
@@ -84,7 +75,7 @@ class Game:
             raise ValueError("No moves to undo")
 
         last_row, last_col = self._moves_history.pop()
-        self._board.do_step(last_row, last_col)
+        self._board.apply_step(last_row, last_col)
 
         self._moves_made = max(0, self._moves_made - 1)
         if self._end_time is not None:
@@ -113,17 +104,11 @@ class Game:
     def moves_history(self) -> list:
         """Return a copy of the move history (list of [row, col] pairs)."""
         return list(self._moves_history)
-    
+
     def is_game_over(self):
-        """Check if game is over based on the current mode."""
+        """Check if game is over based on the current mode via the ruleset."""
 
-        if self._mode == GameMode.ALL_ON:
-            goal_reached = self._board.is_all_on()
-        elif self._mode == GameMode.ALL_OFF:
-            goal_reached = self._board.is_all_off()
-        else:  # "mixed" mode
-            goal_reached = self._board.is_all_on() or self._board.is_all_off()
-
+        goal_reached = self._ruleset.is_solved(self._board.get_board(), self._mode)
         if goal_reached and self._end_time is None:
             self._end_time = time.time()
 
@@ -135,67 +120,31 @@ class Game:
             enabled = not self._solve_mode
 
         self._solve_mode = bool(enabled)
-        
+
         game_state = self.get_game_state()
-        
         if self._solve_mode:
             game_state["solution_cells"] = self._get_solution_cells()
         else:
             game_state["solution_cells"] = []
-        
+
         return game_state
 
-    def _get_solution_cells(self):
-        if self._mode == GameMode.ALL_ON:
-            off_positions_to_press = self._get_positions_to_press(select_on_positions=False)
-            return [[int(row), int(col)] for row, col in off_positions_to_press]
-
-        if self._mode == GameMode.ALL_OFF:
-            on_positions_to_press = self._get_positions_to_press(select_on_positions=True)
-            return [[int(row), int(col)] for row, col in on_positions_to_press]
-
-        on_positions_to_press = self._get_positions_to_press(select_on_positions=True)
-        off_positions_to_press = self._get_positions_to_press(select_on_positions=False)
-
-        if len(on_positions_to_press) <= len(off_positions_to_press):
-            positions_to_press = list(on_positions_to_press.keys())
-        else:
-            positions_to_press = list(off_positions_to_press.keys())
-
-        return [[int(row), int(col)] for row, col in positions_to_press]
-
-    def _get_positions_to_press(self, select_on_positions: bool = True):
-        positions_to_press = {}
-
-        positions = self._board.get_on_positions() if select_on_positions else self._board.get_off_positions()
-
-        for position in positions:
-
-            row, col = position
-
-            if position not in positions_to_press:
-                positions_to_press[position] = 0
-            positions_to_press[position] += 1
-
-            for i in range(self._size):
-                if (row, i) not in positions_to_press:
-                    positions_to_press[(row, i)] = 0
-                positions_to_press[(row, i)] += 1
-
-                if (i, col) not in positions_to_press:
-                    positions_to_press[(i, col)] = 0
-                positions_to_press[(i, col)] += 1
-
-        positions_to_press_filtered = dict(filter(lambda p: p[1] % 2 > 0, positions_to_press.items()))
-
-        return positions_to_press_filtered
+    def _get_solution_cells(self) -> list[list[int]]:
+        """Query solution clicks from the ruleset and format as [[r, c], ...]."""
+        solution_tuples = self._ruleset.solve(self._board.get_board(), self._mode)
+        return [[int(row), int(col)] for row, col in solution_tuples]
 
     @classmethod
     def from_dict(cls, data: dict) -> "Game":
+        board_size = data["board_size"]
+        if isinstance(board_size, (list, tuple)):
+            board_size = board_size[0]
+
         return cls(
-            size=data["board_size"],
+            size=board_size,
             seed=data["seed"],
             mode=data["mode"],
+            ruleset=data.get("ruleset", "color_flip"),
             current_board_state=data["board"],
             moves_made=data.get("moves_made", 0),
             moves_history=data.get("moves_history", []),

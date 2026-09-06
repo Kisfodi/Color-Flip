@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS games (
   
   board_size INTEGER NOT NULL,
   game_mode TEXT NOT NULL DEFAULT 'mixed', -- 'mixed', 'all_on', 'all_off'
+  ruleset TEXT NOT NULL DEFAULT 'color_flip', -- 'color_flip', 'lights_out', etc.
   seed INTEGER NULL,
   
   -- Board configurations AS JSON serialized strings

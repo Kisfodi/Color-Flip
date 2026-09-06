@@ -1,23 +1,25 @@
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 from backend.game_mode import GameMode
 
 # ---------- Request Schemas ----------
 class NewGameRequest(BaseModel):
-    size: int | None = Field(default=None, ge=2, le=20, description="Board size (must be even, 2-20)")
+    size: int | None = Field(default=None, ge=2, le=20, description="Board size (2-20)")
     seed: int | None = Field(default=None, ge=0, description="Seed for reproducible board generation")
     mode: GameMode | None = Field(default=None, description="Game mode: all_on, all_off, or mixed")
+    ruleset: str | None = Field(default="color_flip", description="Ruleset variant: color_flip or lights_out")
 
-    @field_validator("size")
-    @classmethod
-    def size_is_even(cls, value: int | None) -> int | None:
-        if value is not None and value % 2 != 0:
-            raise ValueError("Size must be even")
-        return value
+    @model_validator(mode="after")
+    def validate_size_for_ruleset(self) -> "NewGameRequest":
+        if self.size is not None:
+            ruleset_name = self.ruleset or "color_flip"
+            if ruleset_name == "color_flip" and self.size % 2 != 0:
+                raise ValueError("Size must be even for Color Flip")
+        return self
 
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"size": 6, "seed": 42, "mode": GameMode.MIXED},
+                {"size": 6, "seed": 42, "mode": GameMode.MIXED, "ruleset": "color_flip"},
             ]
         }
     )
@@ -53,11 +55,13 @@ class ConfigResponse(BaseModel):
     seed: int | None = Field(description="Seed for reproducible board generation")
     color_scheme: str = Field(description="Default color scheme name")
     mode: GameMode = Field(description="Default game mode")
+    ruleset: str = Field(default="color_flip", description="Default ruleset")
+    rulesets: list[str] = Field(default_factory=lambda: ["color_flip", "lights_out"], description="Available rulesets")
 
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"size": 6, "seed": 42, "color_scheme": "black_gold_elegance", "mode": "mixed"},
+                {"size": 6, "seed": 42, "color_scheme": "black_gold_elegance", "mode": "mixed", "ruleset": "color_flip"},
             ]
         }
     )
@@ -111,7 +115,6 @@ class ColorScheme(BaseModel):
     )
 
 
-
 class GameStateResponse(BaseModel):
     game_id: str | None = Field(default=None, description="Unique UUID for this game session")
     seed: int | None = Field(default=None, description="Seed used for reproducible board generation")
@@ -122,8 +125,9 @@ class GameStateResponse(BaseModel):
     board_size: tuple[int, int]
     elapsed_time: float
     mode: GameMode
+    ruleset: str = Field(default="color_flip", description="Current ruleset")
     solve_mode: bool
-    solution_cells: list[tuple[int, int]] = Field(
+    solution_cells: list[list[int]] | list[tuple[int, int]] = Field(
         description="List of coordinates for solution cells, only populated if solve_mode is true"
     )
 
@@ -137,6 +141,7 @@ class GameStateResponse(BaseModel):
                     "board_size": [2, 2],
                     "elapsed_time": 12.4,
                     "mode": "mixed",
+                    "ruleset": "color_flip",
                     "solve_mode": True,
                     "solution_cells": [[0, 1], [1, 0]]
                 }

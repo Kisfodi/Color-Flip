@@ -3,6 +3,8 @@ from functools import lru_cache
 
 import yaml
 
+from backend.game_mode import GameMode
+
 
 @lru_cache(maxsize=1)
 def load_game_config():
@@ -53,9 +55,11 @@ def _validate_color_scheme(scheme_name):
 
 def _validate_game_mode(mode):
     """Validate game mode is one of the allowed modes."""
-    if not isinstance(mode, str):
+    try:
+        GameMode(mode)
+        return True
+    except (TypeError, ValueError):
         return False
-    return mode in ["all_on", "all_off", "mixed"]
 
 
 def get_default_board_size():
@@ -112,13 +116,13 @@ def get_default_game_mode():
 
     # Validate mode
     if _validate_game_mode(mode):
-        return mode
+        return GameMode(mode)
 
     # Log warning about invalid mode
     print(f"Warning: Invalid game mode in config: {mode}. Using fallback: mixed")
 
     # Fallback to 'mixed'
-    return 'mixed'
+    return GameMode.MIXED
 
 
 def get_all_config():
