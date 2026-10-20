@@ -164,3 +164,53 @@ def test_undo_after_game_solved_reopens_game():
 
     assert game._end_time is None
     assert game.get_game_state()["game_over"] is False
+
+
+# ─── multi-ruleset integration ────────────────────────────────────────────────
+
+def test_game_with_lights_out_ruleset():
+    """Verify that Game works seamlessly with the Lights Out ruleset on odd board sizes."""
+    game = Game(size=5, seed=42, mode="all_off", ruleset="lights_out")
+    state = game.get_game_state()
+
+    assert state["board_size"] == (5, 5)
+    assert state["ruleset"] == "lights_out"
+    assert state["mode"] == "all_off"
+
+    # Take a step
+    next_state = game.step(2, 2)
+    assert next_state["moves_made"] == 1
+    assert game.moves_history == [[2, 2]]
+
+    # Undo
+    undone_state = game.undo()
+    assert undone_state["moves_made"] == 0
+    assert game.moves_history == []
+
+
+def test_game_rejects_unsupported_mode():
+    """Lights Out only supports 'all_off', so 'mixed' must raise ValueError."""
+    with pytest.raises(ValueError, match="not supported by ruleset"):
+        Game(size=5, ruleset="lights_out", mode="mixed")
+
+
+def test_game_rejects_invalid_size_for_ruleset():
+    """Color Flip requires even sizes; size 3 must raise ValueError."""
+    with pytest.raises(ValueError, match="not valid"):
+        Game(size=3, ruleset="color_flip")
+
+
+def test_game_from_dict_restores_ruleset():
+    """Game.from_dict must properly deserialize ruleset and state."""
+    game = Game(size=5, seed=123, mode="all_off", ruleset="lights_out")
+    game.step(1, 1)
+    state = game.get_game_state()
+    state["moves_history"] = game.moves_history
+
+    restored = Game.from_dict(state)
+    assert restored._size == 5
+    assert restored._ruleset_name == "lights_out"
+    assert restored._moves_made == 1
+    assert restored.moves_history == [[1, 1]]
+
+

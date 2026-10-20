@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from backend.board import ColorFlipBoard
+from backend.color_flip_board import ColorFlipBoard
 
 # -------------------------
 # Fixtures
