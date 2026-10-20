@@ -1,16 +1,18 @@
 from .base_puzzle_ruleset import BasePuzzleRuleset
 from .color_flip_ruleset import ColorFlipRuleSet
 from .lights_out_ruleset import LightsOutRuleset
+from .pattern_ruleset import PatternRuleSet
 
 __all__ = [
     'BasePuzzleRuleset',
     'ColorFlipRuleSet',
     'LightsOutRuleset',
+    'PatternRuleSet',
     'RULESETS',
     'get_ruleset',
 ]
 
-RULESETS: dict[str, type[BasePuzzleRuleset]] = {
+RULESETS: dict[str, type[BasePuzzleRuleset] | BasePuzzleRuleset] = {
     "color_flip": ColorFlipRuleSet,
     "lights_out": LightsOutRuleset,
 }
@@ -22,4 +24,8 @@ def get_ruleset(ruleset: str | BasePuzzleRuleset) -> BasePuzzleRuleset:
 
     if ruleset not in RULESETS:
         raise ValueError(f"Ruleset '{ruleset}' is not supported. Supported rulesets: {list(RULESETS.keys())}")
-    return RULESETS[ruleset]()
+
+    target = RULESETS[ruleset]
+    if isinstance(target, type) or callable(target):
+        return target()
+    return target

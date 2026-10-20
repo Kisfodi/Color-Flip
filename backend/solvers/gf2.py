@@ -2,7 +2,7 @@ from functools import cache
 import numpy as np
 
 @cache
-def get_adjacency_matrix(size: int) -> np.ndarray:
+def build_adjacency_matrix_from_pattern(size: int, pattern: tuple[tuple[int, int], ...]) -> np.ndarray:
     total = size * size
 
     A = np.zeros((total, total), dtype=int)
@@ -12,9 +12,7 @@ def get_adjacency_matrix(size: int) -> np.ndarray:
 
             i = row * size + col
 
-            A[i, i] = 1
-
-            for drow, dcol in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            for drow, dcol in pattern:
                 nrow, ncol = row + drow, col + dcol
                 if 0 <= nrow < size and 0 <= ncol < size:
                     j = nrow * size + ncol

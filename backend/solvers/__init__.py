@@ -1,1 +1,1 @@
-from .gf2 import get_adjacency_matrix, solve_gf2
+from .gf2 import build_adjacency_matrix_from_pattern, solve_gf2

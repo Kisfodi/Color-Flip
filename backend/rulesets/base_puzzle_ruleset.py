@@ -7,8 +7,16 @@ from backend.game_mode import GameMode
 
 class BasePuzzleRuleset(ABC):
 
-    MIN_SIZE = 2
-    MAX_SIZE = 20
+    def __init__(
+            self,
+            min_size: int = 2,
+            max_size: int = 20,
+            even_only: bool = False,
+    ):
+
+        self.min_size = min_size
+        self.max_size = max_size
+        self.even_only = even_only
 
     @property
     @abstractmethod
@@ -32,14 +40,24 @@ class BasePuzzleRuleset(ABC):
     def generate_board(self, size: int, rng: np.random.Generator) -> np.ndarray:
         """Generate a guaranteed-solvable starting board"""
         raise NotImplementedError('Subclasses must implement this method')
-    
+
+    @property
+    def valid_sizes(self) -> list[int]:
+        """
+        Return a list of valid board sizes for this ruleset.
+        :return:
+        """
+
+        step = 2 if self.even_only else 1
+        start = self.min_size if not self.even_only or self.min_size % 2 == 0 else self.min_size + 1
+
+        return [s for s in range(start, self.max_size + 1, step)]
+
     def validate_size(self, size: int) -> None:
         """Common validation shared by all rulesets."""
-         
-        if not isinstance(size, int):
-            raise TypeError("Board size must be an integer.")
-        if not (self.MIN_SIZE <= size <= self.MAX_SIZE):
-            raise ValueError(f"Board size must be between {self.MIN_SIZE} and {self.MAX_SIZE}.")
+
+        if size not in self.valid_sizes:
+            raise ValueError(f"Board size {size} is not valid for this ruleset. Valid sizes: {self.valid_sizes}")
 
         self.validate_custom_size(size)
 

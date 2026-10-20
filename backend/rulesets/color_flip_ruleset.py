@@ -4,6 +4,9 @@ import numpy as np
 
 class ColorFlipRuleSet(BasePuzzleRuleset):
 
+    def __init__(self, min_size: int = 2, max_size: int = 20):
+        super().__init__(min_size=min_size, max_size=max_size, even_only=True)
+
     @property
     def supported_modes(self) -> tuple[GameMode, ...]:
         return GameMode.ALL_OFF, GameMode.ALL_ON, GameMode.MIXED
