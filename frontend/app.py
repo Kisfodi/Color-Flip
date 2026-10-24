@@ -17,7 +17,8 @@ def create_app() -> FastAPI:
     app.state.game = None
 
     app.include_router(router, prefix="/api")
-    app.frontend("/", directory=str(DIST_DIR))
+    if DIST_DIR.exists():
+        app.frontend("/", directory=str(DIST_DIR))
 
     return app
 

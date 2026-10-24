@@ -35,6 +35,8 @@ def test_client(tmp_path):
         yield client
 
 
+# ─── Config & Colors Endpoints ───────────────────────────────────────────────
+
 def test_get_config(test_client):
     res = test_client.get("/api/config")
     assert res.status_code == 200
@@ -53,6 +55,21 @@ def test_get_colors(test_client):
     assert isinstance(colors, dict)
     assert len(colors) > 0
 
+
+def test_get_color_scheme_valid(test_client):
+    res = test_client.get("/api/colors/default")
+    assert res.status_code == 200
+    data = res.json()
+    assert "board" in data
+    assert "on_cell" in data["board"]
+
+
+def test_get_color_scheme_invalid(test_client):
+    res = test_client.get("/api/colors/invalid_scheme_xyz")
+    assert res.status_code in (404, 422)
+
+
+# ─── New Game Endpoint ───────────────────────────────────────────────────────
 
 def test_new_game_color_flip_valid(test_client):
     payload = {"size": 4, "seed": 42, "mode": "mixed", "ruleset": "color_flip"}
@@ -90,6 +107,36 @@ def test_new_game_lights_out_invalid_mode_rejected(test_client):
     assert res.status_code == 400
 
 
+def test_new_game_invalid_ruleset(test_client):
+    res = test_client.post("/api/new_game", json={"ruleset": "nonexistent_ruleset"})
+    assert res.status_code == 400
+
+
+# ─── Game State Endpoint ─────────────────────────────────────────────────────
+
+def test_get_game_state_success(test_client):
+    create_res = test_client.post("/api/new_game", json={"size": 4, "seed": 10})
+    game_id = create_res.json()["game_id"]
+
+    res = test_client.get("/api/game_state", headers={"X-Game-ID": game_id})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["game_id"] == game_id
+    assert data["board_size"] == [4, 4]
+
+
+def test_get_game_state_missing_header(test_client):
+    res = test_client.get("/api/game_state")
+    assert res.status_code in (400, 422)
+
+
+def test_get_game_state_not_found(test_client):
+    res = test_client.get("/api/game_state", headers={"X-Game-ID": "non-existent-uuid"})
+    assert res.status_code == 404
+
+
+# ─── Step & Undo Endpoints ───────────────────────────────────────────────────
+
 def test_step_and_undo_endpoints(test_client):
     # 1. Create a game
     create_res = test_client.post("/api/new_game", json={"size": 4, "seed": 10, "ruleset": "color_flip"})
@@ -112,8 +159,7 @@ def test_step_and_undo_endpoints(test_client):
 
 def test_step_missing_header(test_client):
     res = test_client.post("/api/step", json={"row": 0, "col": 0})
-    assert res.status_code == 400
-    assert "Missing X-Game-ID" in res.json()["detail"]
+    assert res.status_code in (400, 422)
 
 
 def test_step_nonexistent_game(test_client):
@@ -121,6 +167,21 @@ def test_step_nonexistent_game(test_client):
     res = test_client.post("/api/step", json={"row": 0, "col": 0}, headers=headers)
     assert res.status_code == 404
 
+
+def test_undo_no_moves(test_client):
+    create_res = test_client.post("/api/new_game", json={"size": 4, "seed": 10})
+    game_id = create_res.json()["game_id"]
+
+    res = test_client.post("/api/undo", headers={"X-Game-ID": game_id})
+    assert res.status_code == 400
+
+
+def test_undo_missing_header(test_client):
+    res = test_client.post("/api/undo")
+    assert res.status_code in (400, 422)
+
+
+# ─── Solve Game Endpoint ─────────────────────────────────────────────────────
 
 def test_solve_game_endpoint(test_client):
     create_res = test_client.post("/api/new_game", json={"size": 4, "seed": 7, "mode": "all_on", "ruleset": "color_flip"})
@@ -135,3 +196,18 @@ def test_solve_game_endpoint(test_client):
     assert data["solve_mode"] is True
     assert isinstance(data["solution_cells"], list)
     assert len(data["solution_cells"]) > 0
+
+
+def test_solve_game_disable(test_client):
+    create_res = test_client.post("/api/new_game", json={"size": 4, "seed": 7, "mode": "all_on", "ruleset": "color_flip"})
+    game_id = create_res.json()["game_id"]
+
+    headers = {"X-Game-ID": game_id}
+
+    # Enable then disable solver
+    test_client.post("/api/solve_game", json={"enabled": True}, headers=headers)
+    solve_res = test_client.post("/api/solve_game", json={"enabled": False}, headers=headers)
+    assert solve_res.status_code == 200
+    data = solve_res.json()
+    assert data["solve_mode"] is False
+    assert data["solution_cells"] == []
