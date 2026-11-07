@@ -1,4 +1,6 @@
 // settings.js - Modular game settings manager
+import { getColorSchemeCache, getDefaultConfig } from "./gameState.js";
+import { getColorScheme } from "./colorScheme.js";
 
 export const SETTINGS_CONFIG = [
     {
@@ -7,6 +9,13 @@ export const SETTINGS_CONFIG = [
         description: 'Show only the next recommended move instead of the full solution.',
         type: 'toggle',
         default: true,
+    },
+    {
+        id: 'colorScheme',
+        label: 'Color Scheme',
+        description: 'Select board theme for ON and OFF cells.',
+        type: 'color-scheme',
+        default: 'black_gold_elegance',
     }
 ];
 
@@ -20,9 +29,14 @@ export function loadSettings() {
         return currentSettings;
     }
 
+    const defaultConfig = getDefaultConfig() || {};
     const defaults = {};
     SETTINGS_CONFIG.forEach(item => {
-        defaults[item.id] = item.default;
+        if (item.id === 'colorScheme' && defaultConfig.color_scheme) {
+            defaults[item.id] = defaultConfig.color_scheme;
+        } else {
+            defaults[item.id] = item.default;
+        }
     });
 
     try {
@@ -120,9 +134,89 @@ export function renderSettingsModalBody(containerId = 'settings-modal-body') {
             toggleWrapper.appendChild(checkbox);
             toggleWrapper.appendChild(slider);
             itemRow.appendChild(toggleWrapper);
+        } else if (item.type === 'color-scheme') {
+            itemRow.classList.add('setting-item-column');
+
+            const controlWrapper = document.createElement('div');
+            controlWrapper.className = 'color-scheme-control-wrapper';
+
+            const select = document.createElement('select');
+            select.id = 'color-scheme';
+            select.className = 'settings-select';
+
+            const cache = getColorSchemeCache();
+            const currentScheme = settings[item.id] || 'default';
+
+            for (const [name, scheme] of Object.entries(cache)) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = scheme.label || name;
+                if (name === currentScheme) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            }
+
+            // Preview container
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'settings-color-preview';
+
+            const previewLabel = document.createElement('span');
+            previewLabel.className = 'settings-preview-label';
+            previewLabel.textContent = 'Preview:';
+
+            const swatches = document.createElement('div');
+            swatches.className = 'color-preview';
+
+            const onItem = document.createElement('div');
+            onItem.className = 'color-preview-item';
+            const onBox = document.createElement('div');
+            onBox.className = 'color-box on-cell-preview';
+            onBox.title = 'ON cell color';
+            const onLabel = document.createElement('div');
+            onLabel.className = 'color-label';
+            onLabel.textContent = 'ON';
+            onItem.appendChild(onBox);
+            onItem.appendChild(onLabel);
+
+            const offItem = document.createElement('div');
+            offItem.className = 'color-preview-item';
+            const offBox = document.createElement('div');
+            offBox.className = 'color-box off-cell-preview';
+            offBox.title = 'OFF cell color';
+            const offLabel = document.createElement('div');
+            offLabel.className = 'color-label';
+            offLabel.textContent = 'OFF';
+            offItem.appendChild(offBox);
+            offItem.appendChild(offLabel);
+
+            swatches.appendChild(onItem);
+            swatches.appendChild(offItem);
+
+            previewContainer.appendChild(previewLabel);
+            previewContainer.appendChild(swatches);
+
+            function updateSwatches(schemeName) {
+                const colors = getColorScheme(schemeName);
+                if (colors && colors.board) {
+                    onBox.style.backgroundColor = colors.board.on_cell;
+                    offBox.style.backgroundColor = colors.board.off_cell;
+                }
+            }
+
+            updateSwatches(select.value || currentScheme);
+
+            select.addEventListener('change', (e) => {
+                const val = e.target.value;
+                setSetting(item.id, val);
+                updateSwatches(val);
+            });
+
+            controlWrapper.appendChild(select);
+            controlWrapper.appendChild(previewContainer);
+            itemRow.appendChild(controlWrapper);
         }
 
         container.appendChild(itemRow);
     });
 }
-

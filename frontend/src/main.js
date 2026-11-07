@@ -77,12 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // React to settings changes in real time (e.g. if solve hints are on)
+    // React to settings changes in real time
     onSettingChange((key, value) => {
         if (key === 'showOneHint') {
             const state = getCurrentState();
             if (state && state.solve_mode) {
                 refreshSolveHints(value);
+            }
+        } else if (key === 'colorScheme') {
+            updateColorPreview(value);
+            if (getCurrentState()) {
+                renderGameBoard();
+                updateStatus();
             }
         }
     });
@@ -100,15 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Mode selector change handler
     attachModeChangeListener();
-
-    // Color scheme change handler
-    document.getElementById("color-scheme")?.addEventListener("change", () => {
-        updateColorPreview();
-        if (getCurrentState()) {
-            renderGameBoard();
-            updateStatus();
-        }
-    });
 
 });
 

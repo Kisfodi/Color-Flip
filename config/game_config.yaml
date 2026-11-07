@@ -1,5 +1,5 @@
 board:
   size: 4
   seed: null  # Set to an int for reproducible boards
-  color_scheme: "black_gold_elegance"  # Options: default, pastel, neon, black_gold_elegance, ocean_breeze, pastel_dreamland_adventure
+  color_scheme: "default"  # Options: default, pastel, neon, black_gold_elegance, ocean_breeze
   mode: "mixed"  # Options: all_on, all_off, mixed

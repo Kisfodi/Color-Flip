@@ -32,8 +32,7 @@ export function renderGameBoard(highlightSolutionCells = false, solutionCells = 
 
     const board = currentState.board;
 
-    const schemeName = document.getElementById("color-scheme").value;
-    const colors = getColorScheme(schemeName);
+    const colors = getColorScheme();
 
     const cellsToHighlight = currentState?.solve_mode
         ? (highlightSolutionCells ? solutionCells : getPersistentSolutionCells())

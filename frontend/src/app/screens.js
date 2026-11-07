@@ -188,12 +188,11 @@ export function startNewPuzzleSameSettings() {
 }
 
 export function startNewGameWithSize(size, mode, seed = null) {
-    const colorSchemeSelect = document.getElementById("color-scheme");
     const config = {
         size: size,
         mode: mode,
         seed: seed,
-        colorScheme: colorSchemeSelect ? colorSchemeSelect.value : "default",
+        colorScheme: getSetting('colorScheme') || "default",
         show_one_step: getSetting('showOneHint')
     };
 

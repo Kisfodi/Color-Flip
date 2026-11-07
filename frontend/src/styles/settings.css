@@ -143,3 +143,73 @@
 .toggle-switch input:checked+.toggle-slider:before {
     transform: translateX(22px);
 }
+
+/* Color Scheme Settings in Modal */
+.setting-item-column {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.color-scheme-control-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.settings-select {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.settings-select:hover {
+    border-color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.settings-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.35);
+}
+
+.settings-select option {
+    background: #1e1e2f;
+    color: #ffffff;
+    padding: 8px;
+}
+
+.settings-color-preview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-preview-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.settings-color-preview .color-label {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 11px;
+}
+
+.settings-color-preview .color-box {
+    border-color: rgba(255, 255, 255, 0.4);
+}
