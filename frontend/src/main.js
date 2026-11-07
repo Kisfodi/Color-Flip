@@ -2,7 +2,7 @@ import './style.css';
 import colorSchemes from './generated/colors.json';
 import gameConfig from './generated/game-config.json';
 
-import {getCurrentState, setColorSchemeCache, setDefaultConfig} from "./app/gameState.js";
+import {getCurrentState, getCurrentGameId, setColorSchemeCache, setDefaultConfig} from "./app/gameState.js";
 import {
     applyDefaultConfig,
     attachModeChangeListener,
@@ -21,6 +21,30 @@ import {
 import {populateColorSchemeSelect, updateColorPreview} from "./app/colorScheme.js";
 import {renderGameBoard, setSolveButtonState, solveGame, updateStatus, handleUndo, refreshSolveHints} from "./app/board.js";
 import {onSettingChange} from "./app/settings.js";
+import {getElapsed} from "./app/timer.js";
+
+/**
+ * Save the current elapsed time to localStorage whenever the page is hidden
+ * (tab switch, tab close, navigate away, mobile background).
+ * Uses a key scoped to the active game ID so stale values never bleed across games.
+ */
+function saveElapsedOnInterrupt() {
+    const gameId = getCurrentGameId();
+    if (!gameId) return;
+    const gameScreen = document.getElementById("game-screen");
+    if (!gameScreen || gameScreen.style.display === "none") return;
+    localStorage.setItem(`color_flip_paused_elapsed_${gameId}`, getElapsed().toString());
+}
+
+// visibilitychange covers tab-switch, minimise, and close on most browsers
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+        saveElapsedOnInterrupt();
+    }
+});
+
+// pagehide catches close/navigate-away in browsers where visibilitychange may not fire
+window.addEventListener("pagehide", saveElapsedOnInterrupt);
 
 setColorSchemeCache(colorSchemes);
 setDefaultConfig(gameConfig);

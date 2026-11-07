@@ -28,14 +28,19 @@ class NewGameRequest(BaseModel):
 class StepRequest(BaseModel):
     row: int = Field(ge=0, description="Row index of the cell to flip")
     col: int = Field(ge=0, description="Column index of the cell to flip")
+    elapsed_time: float | None = Field(default=None, ge=0, description="Client-side elapsed seconds at the moment of the step")
 
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"row": 0, "col": 0}
+                {"row": 0, "col": 0, "elapsed_time": 12.4}
             ]
         }
     )
+
+
+class UndoRequest(BaseModel):
+    elapsed_time: float | None = Field(default=None, ge=0, description="Client-side elapsed seconds at the moment of undo")
 
 
 class SolveGameRequest(BaseModel):

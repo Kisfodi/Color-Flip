@@ -3,11 +3,12 @@ import {
     setCurrentState,
     setPersistentSolutionCells,
     setCurrentGameId,
+    getCurrentGameId,
     getActiveGameIdFromStorage,
     getCurrentState
 } from './gameState.js';
 import { renderGameBoard, updateStatus, setSolveButtonState } from './board.js';
-import { startTimer, stopTimer } from './timer.js';
+import { startTimer, stopTimer, resetTimer } from './timer.js';
 import { getSetting, renderSettingsModalBody } from './settings.js';
 
 
@@ -138,8 +139,16 @@ export function resumeLastGame() {
 
             renderGameBoard();
             updateStatus();
+
+            // Prefer the paused-at-interrupt elapsed (saved when leaving the game screen)
+            // over the DB snapshot, which only reflects the last move, not the last moment.
+            const pausedKey = `color_flip_paused_elapsed_${activeGameId}`;
+            const savedElapsed = parseFloat(localStorage.getItem(pausedKey));
+            localStorage.removeItem(pausedKey);
+            const initialElapsed = !isNaN(savedElapsed) ? savedElapsed : (data.elapsed_time ?? 0);
+
             stopTimer();
-            startTimer();
+            startTimer(initialElapsed);
         })
         .catch(err => {
             console.error("Failed to resume game:", err);
@@ -153,11 +162,12 @@ export function goToLoadGameScreen() {
 }
 
 export function goBackToStartScreen() {
-    stopTimer();
-
-    // Reset timer display
-    const timerElem = document.getElementById("timer");
-    if (timerElem) timerElem.textContent = "Time: 0:00";
+    const elapsed = stopTimer(); // Pause and capture exact elapsed at this moment
+    const gameId = getCurrentGameId();
+    if (gameId) {
+        // Persist elapsed so resume can restore it even after a page reload
+        localStorage.setItem(`color_flip_paused_elapsed_${gameId}`, elapsed.toString());
+    }
 
     // Hide game screen and show start screen
     document.getElementById("game-screen").style.display = "none";
@@ -222,8 +232,8 @@ export function startNewGameWithSize(size, mode, seed = null) {
             setSolveButtonState(Boolean(data.solve_mode));
             renderGameBoard();
             updateStatus();
-            stopTimer();
-            startTimer();
+            resetTimer();
+            startTimer(0);
         })
         .catch(error => console.error('Error starting game:', error));
 }

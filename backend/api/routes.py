@@ -13,6 +13,7 @@ from backend.api.schemas import (
     NewGameRequest,
     SolveGameRequest,
     StepRequest,
+    UndoRequest,
     ConfigResponse,
     ColorScheme,
     GameStateResponse
@@ -121,17 +122,22 @@ def step(
 
     new_state = game.step(payload.row, payload.col)
 
+    # Prefer the client-reported elapsed (accurate real time) over the
+    # server-computed value, which is unreliable due to per-request reconstruction.
+    time_to_save = payload.elapsed_time if payload.elapsed_time is not None else new_state['elapsed_time']
+
     save_game_progress(
         conn=db,
         game_id=x_game_id,
         current_board=new_state['board'],
         moves_history=game.moves_history,
         moves_count=new_state['moves_made'],
-        time_elapsed=new_state['elapsed_time'],
+        time_elapsed=time_to_save,
         is_completed=new_state['game_over']
     )
 
     new_state["game_id"] = x_game_id
+    new_state["elapsed_time"] = time_to_save  # echo back the saved value
     return new_state
 
 @router.post("/undo", response_model=GameStateResponse)
@@ -139,9 +145,12 @@ def undo(
         game: ActiveGame,
         x_game_id: GameID,
         db: DbConn,
+        payload: Annotated[UndoRequest, Body()] = UndoRequest(),
 ) -> GameStateResponse:
     try:
         new_state = game.undo()
+
+        time_to_save = payload.elapsed_time if payload.elapsed_time is not None else new_state['elapsed_time']
 
         save_game_progress(
             conn=db,
@@ -149,11 +158,12 @@ def undo(
             current_board=new_state['board'],
             moves_history=game.moves_history,
             moves_count=new_state['moves_made'],
-            time_elapsed=new_state['elapsed_time'],
+            time_elapsed=time_to_save,
             is_completed=new_state['game_over']
         )
 
         new_state["game_id"] = x_game_id
+        new_state["elapsed_time"] = time_to_save  # echo back the saved value
         return new_state
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))

@@ -70,6 +70,10 @@ export function setDefaultConfig(config) {
 
 export function handleGameOver(currentState) {
     stopTimer();
+    // Clean up the paused-elapsed snapshot — the game is complete, nothing to resume
+    if (currentGameId) {
+        localStorage.removeItem(`color_flip_paused_elapsed_${currentGameId}`);
+    }
     // Invalidate active game from resume tracking since it is now finished
     clearActiveGameId();
 }

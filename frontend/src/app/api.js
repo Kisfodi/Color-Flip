@@ -1,4 +1,5 @@
 import { getCurrentGameId } from "./gameState.js";
+import { getElapsed } from "./timer.js";
 
 function getGameHeaders() {
     const headers = {
@@ -36,7 +37,7 @@ export async function stepRequest(row, col) {
     const response = await fetch('/api/step', {
         method: 'POST',
         headers: getGameHeaders(),
-        body: JSON.stringify({ row, col })
+        body: JSON.stringify({ row, col, elapsed_time: getElapsed() })
     });
 
     console.log("Doing step: ", row, col);
@@ -47,7 +48,8 @@ export async function stepRequest(row, col) {
 export async function undoRequest() {
     const response = await fetch('/api/undo', {
         method: 'POST',
-        headers: getGameHeaders()
+        headers: getGameHeaders(),
+        body: JSON.stringify({ elapsed_time: getElapsed() })
     });
     return response.json();
 }
