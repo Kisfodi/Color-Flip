@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Color Flip</title>
+    <!-- Google Fonts: Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=settings&display=block" />
 </head>
+
 <body>
+    <button id="settings-btn" class="settings-btn" title="Settings" aria-label="Settings">
+        <span class="material-symbols-outlined">settings</span>
+    </button>
+
     <div id="start-screen" class="start-screen">
         <h1>Color Flip Game</h1>
         <div class="start-menu">
@@ -45,6 +57,17 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-settings-modal-btn" class="close-btn" title="Close">&times;</button>
+            </div>
+            <div class="modal-body" id="settings-modal-body"></div>
+        </div>
+    </div>
+
     <div id="game-screen" class="game-screen" style="display: none;">
         <h1>Color Flip Game</h1>
         <div id="game-controls">
@@ -74,7 +97,8 @@
                 <div class="completion-title">Game completed!</div>
                 <div id="moves-count">Moves made: 0</div>
                 <div id="elapsed-time">Time: 0:00</div>
-                <div class="completion-actions" style="margin-top: 10px; display: flex; gap: 8px; justify-content: center;">
+                <div class="completion-actions"
+                    style="margin-top: 10px; display: flex; gap: 8px; justify-content: center;">
                     <button id="try-again-btn">Try Again</button>
                     <button id="new-puzzle-btn">New Puzzle</button>
                     <button id="menu-btn">Main Menu</button>
@@ -87,4 +111,5 @@
 
     <script type="module" src="/src/main.js"></script>
 </body>
+
 </html>

@@ -11,13 +11,16 @@ import {
     goToNewGameScreen,
     openNewGameModal,
     closeNewGameModal,
+    openSettingsModal,
+    closeSettingsModal,
     resumeLastGame,
     tryAgainCurrentGame,
     startNewPuzzleSameSettings,
     updateResumeButtonState
 } from "./app/screens.js";
 import {populateColorSchemeSelect, updateColorPreview} from "./app/colorScheme.js";
-import {renderGameBoard, setSolveButtonState, solveGame, updateStatus, handleUndo} from "./app/board.js";
+import {renderGameBoard, setSolveButtonState, solveGame, updateStatus, handleUndo, refreshSolveHints} from "./app/board.js";
+import {onSettingChange} from "./app/settings.js";
 
 setColorSchemeCache(colorSchemes);
 setDefaultConfig(gameConfig);
@@ -50,17 +53,37 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("cancel-new-game-btn")?.addEventListener("click", closeNewGameModal);
     document.getElementById("confirm-start-game-btn")?.addEventListener("click", goToNewGameScreen);
 
+    // Settings controls
+    document.getElementById("settings-btn")?.addEventListener("click", openSettingsModal);
+    document.getElementById("close-settings-modal-btn")?.addEventListener("click", closeSettingsModal);
+
     // Close modal on backdrop click
     document.getElementById("new-game-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "new-game-modal") {
             closeNewGameModal();
         }
     });
+    document.getElementById("settings-modal")?.addEventListener("click", (e) => {
+        if (e.target.id === "settings-modal") {
+            closeSettingsModal();
+        }
+    });
 
-    // Close modal on Escape key
+    // Close modals on Escape key
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             closeNewGameModal();
+            closeSettingsModal();
+        }
+    });
+
+    // React to settings changes in real time (e.g. if solve hints are on)
+    onSettingChange((key, value) => {
+        if (key === 'showOneHint') {
+            const state = getCurrentState();
+            if (state && state.solve_mode) {
+                refreshSolveHints(value);
+            }
         }
     });
 

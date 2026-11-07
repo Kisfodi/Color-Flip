@@ -48,6 +48,24 @@ def test_step_recomputes_solution_cells_when_solve_mode_is_on():
     assert state["solution_cells"] != []
 
 
+def test_solve_game_single_step_vs_full_solution():
+    # Board with multiple cells off in all_on mode requires multiple steps
+    board = [[False] * 4 for _ in range(4)]
+    game = Game(size=4, seed=0, mode="all_on", current_board_state=board, show_one_step=True)
+
+    single_state = game.solve_game(enabled=True)
+    assert len(single_state["solution_cells"]) == 1
+    assert single_state["show_one_step"] is True
+
+    full_state = game.solve_game(enabled=True, show_one_step=False)
+    assert len(full_state["solution_cells"]) > 1
+    assert full_state["show_one_step"] is False
+
+    back_to_single = game.solve_game(enabled=True, show_one_step=True)
+    assert len(back_to_single["solution_cells"]) == 1
+    assert back_to_single["show_one_step"] is True
+
+
 # ─── timing ───────────────────────────────────────────────────────────────────
 
 class FakeClock:

@@ -87,9 +87,10 @@ def new_game(
     seed = data.get("seed", get_default_seed())
     mode = data.get("mode", get_default_game_mode())
     ruleset = data.get("ruleset", "color_flip")
+    show_one_step = data.get("show_one_step", True)
 
     try:
-        game = Game(size=size, seed=seed, mode=mode, ruleset=ruleset)
+        game = Game(size=size, seed=seed, mode=mode, ruleset=ruleset, show_one_step=show_one_step)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -165,6 +166,7 @@ def solve_game(
 ) -> GameStateResponse:
     data = payload.model_dump(exclude_none=True)
     enabled = data.get("enabled")
-    state = game.solve_game(enabled=enabled)
+    show_one_step = data.get("show_one_step")
+    state = game.solve_game(enabled=enabled, show_one_step=show_one_step)
     state["game_id"] = x_game_id
     return state

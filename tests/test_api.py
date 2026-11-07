@@ -211,3 +211,25 @@ def test_solve_game_disable(test_client):
     data = solve_res.json()
     assert data["solve_mode"] is False
     assert data["solution_cells"] == []
+
+
+def test_solve_game_endpoint_show_one_step(test_client):
+    create_res = test_client.post("/api/new_game", json={"size": 4, "seed": 7, "mode": "all_on", "ruleset": "color_flip", "show_one_step": True})
+    game_id = create_res.json()["game_id"]
+
+    headers = {"X-Game-ID": game_id}
+
+    # Enable solver with single step
+    solve_res = test_client.post("/api/solve_game", json={"enabled": True, "show_one_step": True}, headers=headers)
+    assert solve_res.status_code == 200
+    data = solve_res.json()
+    assert data["solve_mode"] is True
+    assert len(data["solution_cells"]) == 1
+    assert data["show_one_step"] is True
+
+    # Switch to full solution
+    solve_full = test_client.post("/api/solve_game", json={"enabled": True, "show_one_step": False}, headers=headers)
+    assert solve_full.status_code == 200
+    data_full = solve_full.json()
+    assert len(data_full["solution_cells"]) > 1
+    assert data_full["show_one_step"] is False

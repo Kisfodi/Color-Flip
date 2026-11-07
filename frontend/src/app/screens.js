@@ -8,6 +8,7 @@ import {
 } from './gameState.js';
 import { renderGameBoard, updateStatus, setSolveButtonState } from './board.js';
 import { startTimer, stopTimer } from './timer.js';
+import { getSetting, renderSettingsModalBody } from './settings.js';
 
 
 function updateModeDescription() {
@@ -63,6 +64,21 @@ export function openNewGameModal() {
 
 export function closeNewGameModal() {
     const modal = document.getElementById("new-game-modal");
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+export function openSettingsModal() {
+    renderSettingsModalBody();
+    const modal = document.getElementById("settings-modal");
+    if (modal) {
+        modal.style.display = "flex";
+    }
+}
+
+export function closeSettingsModal() {
+    const modal = document.getElementById("settings-modal");
     if (modal) {
         modal.style.display = "none";
     }
@@ -177,7 +193,8 @@ export function startNewGameWithSize(size, mode, seed = null) {
         size: size,
         mode: mode,
         seed: seed,
-        colorScheme: colorSchemeSelect ? colorSchemeSelect.value : "default"
+        colorScheme: colorSchemeSelect ? colorSchemeSelect.value : "default",
+        show_one_step: getSetting('showOneHint')
     };
 
     setPersistentSolutionCells([]);

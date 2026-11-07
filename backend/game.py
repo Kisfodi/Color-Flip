@@ -19,6 +19,7 @@ class Game:
             moves_made: int = 0,
             moves_history: list | None = None,
             elapsed_time_offset: float = 0.0,
+            show_one_step: bool = True,
     ):
         if seed is None:
             seed = int(np.random.randint(1, 1_000_000))
@@ -39,6 +40,7 @@ class Game:
         self._moves_made = moves_made
         self._moves_history = moves_history if moves_history is not None else []
         self._solve_mode = False
+        self._show_one_step = bool(show_one_step)
 
         self._start_time = time.time() - elapsed_time_offset
         self._end_time = None
@@ -56,6 +58,7 @@ class Game:
             "ruleset": self._ruleset_name,
             "solve_mode": self._solve_mode,
             "solution_cells": self._get_solution_cells() if self._solve_mode else [],
+            "show_one_step": self._show_one_step,
             "seed": self._seed
         }
 
@@ -114,12 +117,14 @@ class Game:
 
         return goal_reached
 
-    def solve_game(self, enabled: bool | None = None):
+    def solve_game(self, enabled: bool | None = None, show_one_step: bool | None = None):
         """Toggle solver hints on or off for the current board state."""
         if enabled is None:
             enabled = not self._solve_mode
 
         self._solve_mode = bool(enabled)
+        if show_one_step is not None:
+            self._show_one_step = bool(show_one_step)
 
         game_state = self.get_game_state()
         if self._solve_mode:
@@ -129,8 +134,10 @@ class Game:
 
         return game_state
 
-    def _get_solution_cells(self, show_one_step: bool = True) -> list[list[int]]:
+    def _get_solution_cells(self, show_one_step: bool | None = None) -> list[list[int]]:
         """Query solution clicks from the ruleset and format as [[r, c], ...]."""
+        if show_one_step is None:
+            show_one_step = self._show_one_step
 
         board_array = self._board.get_board()
         solution_tuples = self._ruleset.solve(board_array, self._mode)
@@ -160,4 +167,5 @@ class Game:
             moves_made=data.get("moves_made", 0),
             moves_history=data.get("moves_history", []),
             elapsed_time_offset=data.get("elapsed_time", 0.0),
+            show_one_step=data.get("show_one_step", True),
         )

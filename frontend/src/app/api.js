@@ -52,11 +52,15 @@ export async function undoRequest() {
     return response.json();
 }
 
-export async function solveGameRequest(enabled) {
+export async function solveGameRequest(enabled, showOneStep = null) {
+    const payload = { enabled };
+    if (showOneStep !== null) {
+        payload.show_one_step = Boolean(showOneStep);
+    }
     const response = await fetch('/api/solve_game', {
         method: 'POST',
         headers: getGameHeaders(),
-        body: JSON.stringify({ enabled })
+        body: JSON.stringify(payload)
     });
     return response.json();
 }

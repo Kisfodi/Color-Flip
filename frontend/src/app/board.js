@@ -6,6 +6,7 @@ import {
     setPersistentSolutionCells
 } from "./gameState.js";
 import {getColorScheme} from "./colorScheme.js";
+import {getSetting} from "./settings.js";
 
 export function setSolveButtonState(enabled) {
     const button = document.getElementById("solve-game-btn");
@@ -166,8 +167,9 @@ export function updateStatus() {
     }
 }
 
-function refreshSolveHints() {
-    return solveGameRequest(true)
+export function refreshSolveHints(showOneStep = null) {
+    const stepOption = showOneStep !== null ? showOneStep : getSetting('showOneHint');
+    return solveGameRequest(true, stepOption)
         .then(data => {
             setCurrentState(data);
             const solutionCells = data.solution_cells || [];
@@ -184,7 +186,8 @@ export function solveGame() {
     const enabled = !currentState?.solve_mode;
     setSolveButtonState(enabled);
 
-    solveGameRequest(enabled)
+    const showOneStep = getSetting('showOneHint');
+    solveGameRequest(enabled, showOneStep)
         .then(data => {
             setCurrentState(data);
             const solutionCells = data.solution_cells || [];

@@ -7,6 +7,7 @@ class NewGameRequest(BaseModel):
     seed: int | None = Field(default=None, ge=0, description="Seed for reproducible board generation")
     mode: GameMode | None = Field(default=None, description="Game mode: all_on, all_off, or mixed")
     ruleset: str | None = Field(default="color_flip", description="Ruleset variant: color_flip or lights_out")
+    show_one_step: bool | None = Field(default=True, description="Whether to show one hint at a time")
 
     @model_validator(mode="after")
     def validate_size_for_ruleset(self) -> "NewGameRequest":
@@ -19,7 +20,7 @@ class NewGameRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"size": 6, "seed": 42, "mode": GameMode.MIXED, "ruleset": "color_flip"},
+                {"size": 6, "seed": 42, "mode": GameMode.MIXED, "ruleset": "color_flip", "show_one_step": True},
             ]
         }
     )
@@ -39,11 +40,12 @@ class StepRequest(BaseModel):
 
 class SolveGameRequest(BaseModel):
     enabled: bool | None = Field(default=None, description="Enable or disable solver hints")
+    show_one_step: bool | None = Field(default=None, description="Whether to show one hint at a time")
 
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"enabled": True}
+                {"enabled": True, "show_one_step": True}
             ]
         }
     )
@@ -127,6 +129,7 @@ class GameStateResponse(BaseModel):
     mode: GameMode
     ruleset: str = Field(default="color_flip", description="Current ruleset")
     solve_mode: bool
+    show_one_step: bool = Field(default=True, description="Whether to show one hint at a time")
     solution_cells: list[list[int]] | list[tuple[int, int]] = Field(
         description="List of coordinates for solution cells, only populated if solve_mode is true"
     )
