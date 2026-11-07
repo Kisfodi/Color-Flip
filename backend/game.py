@@ -129,10 +129,21 @@ class Game:
 
         return game_state
 
-    def _get_solution_cells(self) -> list[list[int]]:
+    def _get_solution_cells(self, show_one_step: bool = True) -> list[list[int]]:
         """Query solution clicks from the ruleset and format as [[r, c], ...]."""
-        solution_tuples = self._ruleset.solve(self._board.get_board(), self._mode)
-        return [[int(row), int(col)] for row, col in solution_tuples]
+
+        board_array = self._board.get_board()
+        solution_tuples = self._ruleset.solve(board_array, self._mode)
+
+        if not solution_tuples:
+            return []
+
+        solution_cells = [[int(row), int(col)] for row, col in solution_tuples]
+
+        if show_one_step:
+            return solution_cells[:1]
+
+        return solution_cells
 
     @classmethod
     def from_dict(cls, data: dict) -> "Game":

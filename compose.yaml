@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        NODE_VERSION: ${NODE_VERSION:-24}
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.14}
+    container_name: color-flip
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5050}:5050"
+    environment:
+      - PORT=5050
+      - HOST=0.0.0.0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - sqlite_data:/home/appuser/app/instance
+    command: [ '.venv/bin/python', '-m', 'frontend.app' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /home/appuser/app/backend
+        - action: sync
+          path: ./frontend/dist
+          target: /home/appuser/app/frontend/dist
+        - action: rebuild
+          path: ./uv.lock
+
+volumes:
+  sqlite_data:
